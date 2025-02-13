@@ -1,6 +1,6 @@
 # OpenAPI spec for the Sofer.Ai API
 
-This repository contains an [OpenAPI](https://www.openapis.org/) specification for the [OpenAI API](https://docs.sofer.ai).
+This repository contains an [OpenAPI](https://www.openapis.org/) specification for the [Sofer.Ai API](https://docs.sofer.ai).
 
 ## Public mirror - do not send pull requests
 

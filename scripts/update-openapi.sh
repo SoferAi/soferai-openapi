@@ -5,4 +5,6 @@ set -euo pipefail
 curl -s https://api.sofer.ai/openapi.json | jq > openapi.json
 
 # Convert JSON to YAML using yq
-yq -P openapi.json > openapi.yaml 
+yq -P --output-format yaml openapi.json > openapi.yaml 
+
+yamlfmt .
