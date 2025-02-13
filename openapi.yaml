@@ -1,0 +1,362 @@
+---
+openapi: 3.0.1
+info:
+  title: api
+  version: ""
+paths:
+  /v1/health/:
+    get:
+      operationId: health_getHealth
+      tags:
+        - Health
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+      summary: Get health status
+  /v1/link/extract:
+    post:
+      operationId: link_extract
+      tags:
+        - Link
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkResponse'
+        "400":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+      summary: Extract download link from a given URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkRequest'
+  /v1/transcriptions/:
+    post:
+      description: Create a new transcription
+      operationId: transcribe_createTranscription
+      tags:
+        - Transcribe
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionId'
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranscriptionRequest'
+  /v1/transcriptions/{transcription_id}/status:
+    get:
+      description: Get transcription status
+      operationId: transcribe_getTranscriptionStatus
+      tags:
+        - Transcribe
+      parameters:
+        - name: transcription_id
+          in: path
+          description: ID of the transcription
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionInfo'
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/transcriptions/{transcription_id}:
+    get:
+      description: Get transcription
+      operationId: transcribe_getTranscription
+      tags:
+        - Transcribe
+      parameters:
+        - name: transcription_id
+          in: path
+          description: ID of the transcription
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcription'
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/usage/{user_id}:
+    get:
+      description: Get usage info
+      operationId: usage_getUsage
+      tags:
+        - Usage
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usage'
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
+components:
+  schemas:
+    HealthResponse:
+      title: HealthResponse
+      type: object
+      properties:
+        status:
+          type: string
+          description: Health status
+      required:
+        - status
+    LinkRequest:
+      title: LinkRequest
+      type: object
+      properties:
+        url:
+          type: string
+          description: URL to extract the download link from
+      required:
+        - url
+    LinkResponse:
+      title: LinkResponse
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the file
+        download_url:
+          type: string
+          description: Download URL of the file
+        file_format:
+          type: string
+          description: Format of the file
+        file_name:
+          type: string
+          description: Name of the file
+      required:
+        - title
+        - download_url
+        - file_format
+        - file_name
+    TranscriptionRequest:
+      title: TranscriptionRequest
+      type: object
+      properties:
+        audio_url:
+          type: string
+          nullable: true
+          description: URL to the audio file
+        audio_id:
+          type: string
+          nullable: true
+          description: ID of the audio file (for audio in the S3 bucket, this is the postgres storage metadata id)
+        info:
+          $ref: '#/components/schemas/TranscriptionInfo'
+          description: Transcription parameters
+      required:
+        - info
+    Language:
+      title: Language
+      type: string
+      enum:
+        - en
+        - he
+    TranscriptionId:
+      title: TranscriptionId
+      type: string
+      format: uuid
+      description: ID of the transcription
+    Status:
+      title: Status
+      type: string
+      enum:
+        - RECEIVED
+        - PENDING
+        - PROCESSING
+        - COMPLETED
+        - CANCELLED
+        - FAILED
+    TranscriptionInfo:
+      title: TranscriptionInfo
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/TranscriptionId'
+          nullable: true
+          description: ID of the transcription
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the user
+        title:
+          type: string
+          nullable: true
+          description: Title of the transcription
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date of the transcription
+        primary_language:
+          $ref: '#/components/schemas/Language'
+          nullable: true
+          description: Primary language of the audio content
+        lang_for_hebrew_words:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+          nullable: true
+          description: Language setting for Hebrew words processing (only need to be specified if the primary language is English)
+        num_speakers:
+          type: integer
+          nullable: true
+          description: Expected number of speakers in the audio
+        status:
+          $ref: '#/components/schemas/Status'
+          nullable: true
+          description: Status of the transcription
+        duration:
+          type: number
+          format: double
+          nullable: true
+          description: Duration of the transcription
+    Transcription:
+      title: Transcription
+      type: object
+      properties:
+        text:
+          type: string
+          description: "Transcription text. if the `primary_language` was English and only one `lang_for_hebrew_words` was specified, \nthis is just the English text with whatever language for the words you specified.\nIf you set multiple `lang_for_hebrew_words`,\nthis is the text with Hebrew words, with the English text in <i>Italics</i> markup. \nIf primary language is Hebrew, this is just the Hebrew text."
+        timestamps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Timestamp'
+          nullable: true
+          description: Timestamps for the transcription text
+        info:
+          $ref: '#/components/schemas/TranscriptionInfo'
+          description: Additional information about the transcription
+      required:
+        - text
+        - info
+    Timestamp:
+      title: Timestamp
+      type: object
+      properties:
+        word:
+          type: string
+          description: Word
+        punctuated_word:
+          type: string
+          nullable: true
+          description: Punctuated word
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+          nullable: true
+          description: Language for the transcription that this timestamp belongs to
+        start:
+          type: number
+          format: double
+          description: Start time of the timestamp
+        end:
+          type: number
+          format: double
+          description: End time of the timestamp
+        speaker:
+          type: string
+          nullable: true
+          description: Speaker (Pro feature)
+      required:
+        - word
+        - start
+        - end
+    Usage:
+      title: Usage
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID of the user
+        seconds_remaining:
+          type: integer
+          format: float
+          description: Seconds remaining for the user
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the organization the user belongs to
+      required:
+        - id
+        - seconds_remaining
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+servers:
+  - url: https://api.sofer.ai
+    description: Production
+  - url: https://api-staging.sofer.ai
+    description: Staging
+  - url: http://localhost:8001
+    description: Development

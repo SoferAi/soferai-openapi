@@ -1,0 +1,20 @@
+---
+name: Run Spectral on Pull Requests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Run Spectral
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v3
+
+      # Run Spectral
+      - uses: stoplightio/spectral-action@latest
+        with:
+          file_glob: 'openapi.yaml'
