@@ -200,7 +200,6 @@ components:
       properties:
         audio_url:
           type: string
-          nullable: true
           description: URL to the audio file
         audio_id:
           type: string
@@ -210,6 +209,7 @@ components:
           $ref: '#/components/schemas/TranscriptionInfo'
           description: Transcription parameters
       required:
+        - audio_url
         - info
     Language:
       title: Language

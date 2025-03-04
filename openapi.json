@@ -309,7 +309,6 @@
         "properties": {
           "audio_url": {
             "type": "string",
-            "nullable": true,
             "description": "URL to the audio file"
           },
           "audio_id": {
@@ -323,6 +322,7 @@
           }
         },
         "required": [
+          "audio_url",
           "info"
         ]
       },
