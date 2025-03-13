@@ -130,7 +130,7 @@ paths:
         - BearerAuth: []
   /v1/transcriptions/update-timestamps:
     post:
-      description: Update timestamps for a specific language in a transcription
+      description: Update the timestamps based on edited text. Updates one language at a time.
       operationId: transcribe_updateTranscriptionTimestamps
       tags:
         - Transcribe
@@ -141,7 +141,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transcription'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Timestamp'
         "401":
           description: ""
         "404":
@@ -318,12 +320,6 @@ components:
             $ref: '#/components/schemas/Timestamp'
           nullable: true
           description: Timestamps for the transcription text
-        timestamps_edited:
-          type: array
-          items:
-            $ref: '#/components/schemas/Timestamp'
-          nullable: true
-          description: If you edited the timestamps, and used the update-timestamps endpoint, this is the edited timestamps
         info:
           $ref: '#/components/schemas/TranscriptionInfo'
           description: Additional information about the transcription
@@ -367,18 +363,20 @@ components:
       title: UpdateTimestampsRequest
       type: object
       properties:
-        transcription_id:
+        old_timestamps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Timestamp'
+          description: The original timestamps associated with the text before editing. These will be used as reference points to align the new timestamps.
+        edited_text:
           type: string
-          description: ID of the transcription to update
-        edited_transcript:
-          type: string
-          description: The edited transcript text
+          description: The modified version of the transcription text that needs updated timestamp alignments. This should be the complete text after your edits.
         language_to_update:
-          type: string
-          description: The language for which to update timestamps
+          $ref: '#/components/schemas/Language'
+          description: Specifies which language version of the timestamps to update. Must be either 'en' for English or 'he' for Hebrew timestamps.
       required:
-        - transcription_id
-        - edited_transcript
+        - old_timestamps
+        - edited_text
         - language_to_update
     Usage:
       title: Usage
