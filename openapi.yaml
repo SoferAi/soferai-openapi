@@ -44,6 +44,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LinkRequest'
+  /v1/link/sites:
+    get:
+      operationId: link_get-supported-sites
+      tags:
+        - Link
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Site'
+      summary: Get supported sites
   /v1/transcriptions/:
     post:
       description: Create a new transcription
@@ -224,6 +240,19 @@ components:
         - download_url
         - file_format
         - file_name
+    Site:
+      title: Site
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the site
+        url:
+          type: string
+          description: URL of the site
+      required:
+        - name
+        - url
     TranscriptionRequest:
       title: TranscriptionRequest
       type: object
@@ -247,6 +276,7 @@ components:
       enum:
         - en
         - he
+        - yi
     TranscriptionId:
       title: TranscriptionId
       type: string
@@ -266,6 +296,10 @@ components:
       title: TranscriptionInfo
       type: object
       properties:
+        model:
+          type: string
+          nullable: true
+          description: Model to use for the transcription
         id:
           $ref: '#/components/schemas/TranscriptionId'
           nullable: true
