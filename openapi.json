@@ -427,6 +427,14 @@
           "yi"
         ]
       },
+      "LettersLanguage": {
+        "title": "LettersLanguage",
+        "type": "string",
+        "enum": [
+          "en",
+          "he"
+        ]
+      },
       "TranscriptionId": {
         "title": "TranscriptionId",
         "type": "string",
@@ -452,7 +460,7 @@
           "model": {
             "type": "string",
             "nullable": true,
-            "description": "Model to use for the transcription"
+            "description": "Model to use for the transcription. Default is \"v1\", our newest model. Can also pass \"v0\", our original model."
           },
           "id": {
             "$ref": "#/components/schemas/TranscriptionId",
@@ -463,18 +471,12 @@
             "type": "string",
             "format": "uuid",
             "nullable": true,
-            "description": "ID of the user"
+            "description": "ID of the user. If you want the transcription to be associated with your Sofer.Ai account pass your user_id."
           },
           "title": {
             "type": "string",
             "nullable": true,
             "description": "Title of the transcription"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date of the transcription"
           },
           "primary_language": {
             "$ref": "#/components/schemas/Language",
@@ -484,26 +486,15 @@
           "lang_for_hebrew_words": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Language"
+              "$ref": "#/components/schemas/LettersLanguage"
             },
             "nullable": true,
-            "description": "Language setting for Hebrew words processing (only need to be specified if the primary language is English)"
+            "description": "Specifies how Hebrew words should be transcribed when the primary language is English. - If you want Hebrew words in Hebrew letters, include \"he\". - If you want Hebrew words transliterated into English letters, include \"en\". - If you include both \"he\" and \"en\", you will receive both versions back-to-back for each Hebrew word. Transliterated Hebrew words will be surrounded by <i> tags in the text."
           },
           "num_speakers": {
             "type": "integer",
             "nullable": true,
             "description": "Expected number of speakers in the audio"
-          },
-          "status": {
-            "$ref": "#/components/schemas/Status",
-            "nullable": true,
-            "description": "Status of the transcription"
-          },
-          "duration": {
-            "type": "number",
-            "format": "double",
-            "nullable": true,
-            "description": "Duration of the transcription"
           }
         }
       },
@@ -549,10 +540,10 @@
           "languages": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Language"
+              "$ref": "#/components/schemas/LettersLanguage"
             },
             "nullable": true,
-            "description": "Language for the transcription that this timestamp belongs to"
+            "description": "The language(s) for which this timestamp applies. If a word appears in both language versions, this field will include both \"he\" and \"en\". If the word is written in Hebrew letters, it will only have \"he\". If the word is transliterated into English letters, it will only have \"en\"."
           },
           "start": {
             "type": "number",
