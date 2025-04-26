@@ -401,20 +401,20 @@
         "properties": {
           "audio_url": {
             "type": "string",
-            "description": "URL to the audio file"
+            "nullable": true,
+            "description": "URL to a downloadable audio file. Must be a direct link to the file (not a streaming or preview link). Either audio_url or audio_file must be provided, but not both."
           },
-          "audio_id": {
+          "audio_file": {
             "type": "string",
             "nullable": true,
-            "description": "ID of the audio file (for audio in the S3 bucket, this is the postgres storage metadata id)"
+            "description": "Base64 encoded audio file content. Either audio_url or audio_file must be provided, but not both."
           },
           "info": {
-            "$ref": "#/components/schemas/TranscriptionInfo",
+            "$ref": "#/components/schemas/TranscriptionRequestInfo",
             "description": "Transcription parameters"
           }
         },
         "required": [
-          "audio_url",
           "info"
         ]
       },
@@ -453,8 +453,8 @@
           "FAILED"
         ]
       },
-      "TranscriptionInfo": {
-        "title": "TranscriptionInfo",
+      "TranscriptionRequestInfo": {
+        "title": "TranscriptionRequestInfo",
         "type": "object",
         "properties": {
           "model": {
@@ -497,6 +497,63 @@
             "description": "Expected number of speakers in the audio"
           }
         }
+      },
+      "TranscriptionInfo": {
+        "title": "TranscriptionInfo",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/TranscriptionId",
+            "description": "ID of the transcription"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the transcription"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the transcription was created"
+          },
+          "primary_language": {
+            "$ref": "#/components/schemas/Language",
+            "description": "Primary language of the audio content"
+          },
+          "lang_for_hebrew_words": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LettersLanguage"
+            },
+            "description": "Languages used for Hebrew words in the transcription"
+          },
+          "num_speakers": {
+            "type": "integer",
+            "description": "Number of speakers in the audio"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status",
+            "description": "Current status of the transcription"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Duration of the audio in seconds"
+          },
+          "model": {
+            "type": "string",
+            "nullable": true,
+            "description": "Model used for the transcription"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "created_at",
+          "primary_language",
+          "lang_for_hebrew_words",
+          "num_speakers",
+          "status",
+          "duration"
+        ]
       },
       "Transcription": {
         "title": "Transcription",
