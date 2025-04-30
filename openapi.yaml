@@ -310,11 +310,6 @@ components:
           $ref: '#/components/schemas/TranscriptionId'
           nullable: true
           description: ID of the transcription
-        user_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: ID of the user. If you want the transcription to be associated with your Sofer.Ai account pass your user_id.
         title:
           type: string
           nullable: true
