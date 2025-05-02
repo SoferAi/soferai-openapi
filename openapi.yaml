@@ -4,6 +4,24 @@ info:
   title: api
   version: ""
 paths:
+  /v1/balance/:
+    get:
+      description: Get account balance in cents
+      operationId: balance_getBalance
+      tags:
+        - Balance
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/health/:
     get:
       operationId: health_getHealth
@@ -174,33 +192,17 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateTimestampsRequest'
-  /v1/usage/{user_id}:
-    get:
-      description: Get usage info
-      operationId: usage_getUsage
-      tags:
-        - Usage
-      parameters:
-        - name: user_id
-          in: path
-          description: ID of the user
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Usage'
-        "404":
-          description: ""
-      security:
-        - BearerAuth: []
 components:
   schemas:
+    Balance:
+      title: Balance
+      type: object
+      properties:
+        cents_remaining:
+          type: integer
+          description: Amount of money remaining in cents (integer value, e.g. 100 = $1.00)
+      required:
+        - cents_remaining
     HealthResponse:
       title: HealthResponse
       type: object
@@ -443,26 +445,6 @@ components:
         - old_timestamps
         - edited_text
         - language_to_update
-    Usage:
-      title: Usage
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ID of the user
-        seconds_remaining:
-          type: integer
-          format: float
-          description: Seconds remaining for the user
-        organization_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: ID of the organization the user belongs to
-      required:
-        - id
-        - seconds_remaining
   securitySchemes:
     BearerAuth:
       type: http
