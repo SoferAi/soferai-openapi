@@ -360,6 +360,7 @@ components:
           description: Current status of the transcription
         duration:
           type: integer
+          format: float
           description: Duration of the audio in seconds
         model:
           type: string
