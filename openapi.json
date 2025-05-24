@@ -479,7 +479,7 @@
             "nullable": true,
             "description": "Primary language of the audio content"
           },
-          "lang_for_hebrew_words": {
+          "hebrew_word_format": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LettersLanguage"
@@ -515,12 +515,12 @@
             "$ref": "#/components/schemas/Language",
             "description": "Primary language of the audio content"
           },
-          "lang_for_hebrew_words": {
+          "hebrew_word_format": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LettersLanguage"
             },
-            "description": "Languages used for Hebrew words in the transcription"
+            "description": "Specifies how Hebrew words should be transcribed when the primary language is English. - If you want Hebrew words in Hebrew letters, include \"he\". - If you want Hebrew words transliterated into English letters, include \"en\". - If you include both \"he\" and \"en\", you will receive both versions back-to-back for each Hebrew word. Transliterated Hebrew words will be surrounded by <i> tags in the text."
           },
           "num_speakers": {
             "type": "integer",
@@ -546,7 +546,7 @@
           "title",
           "created_at",
           "primary_language",
-          "lang_for_hebrew_words",
+          "hebrew_word_format",
           "num_speakers",
           "status",
           "duration"
@@ -558,7 +558,7 @@
         "properties": {
           "text": {
             "type": "string",
-            "description": "Transcription text. if the `primary_language` was English and only one `lang_for_hebrew_words` was specified, \nthis is just the English text with whatever language for the words you specified.\nIf you set multiple `lang_for_hebrew_words`,\nthis is the text with Hebrew words, with the English text in <i>Italics</i> markup. \nIf primary language is Hebrew, this is just the Hebrew text."
+            "description": "Transcription text. if the `primary_language` was English and only one `hebrew_word_format` was specified, \nthis is just the English text with whatever language for the words you specified.\nIf you set multiple `hebrew_word_format`,\nthis is the text with Hebrew words, with the English text in <i>Italics</i> markup. \nIf primary language is Hebrew, this is just the Hebrew text."
           },
           "timestamps": {
             "type": "array",
@@ -586,18 +586,13 @@
             "type": "string",
             "description": "Word"
           },
-          "punctuated_word": {
-            "type": "string",
-            "nullable": true,
-            "description": "Punctuated word"
-          },
-          "languages": {
+          "hebrew_word_format": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LettersLanguage"
             },
             "nullable": true,
-            "description": "The language(s) for which this timestamp applies. If a word appears in both language versions, this field will include both \"he\" and \"en\". If the word is written in Hebrew letters, it will only have \"he\". If the word is transliterated into English letters, it will only have \"en\"."
+            "description": "Indicates the format of Hebrew words in the transcription. For Hebrew words, this will be \"he\" if written in Hebrew letters, or \"en\" if transliterated to English letters. For non-Hebrew words, this field will be null."
           },
           "start": {
             "type": "number",
@@ -612,7 +607,7 @@
           "speaker": {
             "type": "string",
             "nullable": true,
-            "description": "Speaker (Pro feature)"
+            "description": "If speaker labeling was requested, indicates which speaker number spoke this word (Pro feature)"
           }
         },
         "required": [
