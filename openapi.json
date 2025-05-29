@@ -413,7 +413,7 @@
           "model": {
             "type": "string",
             "nullable": true,
-            "description": "Model to be used for the transcription.\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.50 USD per hour of audio transcribed.\n- v0: Suitable for audio with fewer Hebrew words.\nPriced at 1.00 USD per hour."
+            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.50 USD per hour of audio transcribed.\n- v0: Suitable for audio with fewer Hebrew words.\nPriced at 1.00 USD per hour."
           },
           "id": {
             "$ref": "#/components/schemas/TranscriptionId",
@@ -423,7 +423,7 @@
           "title": {
             "type": "string",
             "nullable": true,
-            "description": "Title for the transcription"
+            "description": "Title for the transcription, Default is \"Untitled\""
           },
           "primary_language": {
             "$ref": "#/components/schemas/Language",
@@ -436,7 +436,7 @@
               "$ref": "#/components/schemas/LettersLanguage"
             },
             "nullable": true,
-            "description": "Relevant only if the primary language is English. This setting determines how non-English word, are formatted in the transcription.\n- To include Hebrew words in their original Hebrew letters, specify \"he\".\n- To transliterate Hebrew words into English letters, specify \"en\".\n- If both \"he\" and \"en\" are specified, each Hebrew word will be provided in both formats, with the transliteration in <i> tags."
+            "description": "Relevant only if the primary language is English. This setting determines how non-English word, are formatted in the transcription.\n- To include Hebrew words in their original Hebrew letters, specify \"he\".\n- To transliterate Hebrew words into English letters, specify \"en\".\n- If both \"he\" and \"en\" are specified, each Hebrew word will be provided in both formats, with the transliteration in <i> tags.\n- If the primary language is English, the default is to include both English transliteration and original Hebrew letters (\"en\" and \"he\").\n- If the primary language is not English, the default and only option is to include Hebrew words in their original Hebrew letters (\"he\")."
           },
           "num_speakers": {
             "type": "integer",
