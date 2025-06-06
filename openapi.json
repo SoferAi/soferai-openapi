@@ -133,7 +133,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "The unique identifier for the newly created transcription. \nUse this ID to check the status of the transcription or to retrieve the transcription result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -177,11 +177,17 @@
           {
             "name": "transcription_id",
             "in": "path",
-            "description": "ID of the transcription",
+            "description": "ID of the transcription. Use the ID returned from the Create Transcription endpoint.",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid"
+            },
+            "example": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
+            "examples": {
+              "Example1": {
+                "value": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32"
+              }
             }
           }
         ],
@@ -192,6 +198,24 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TranscriptionInfo"
+                },
+                "examples": {
+                  "Example1": {
+                    "value": {
+                      "id": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
+                      "title": "My Shiur Transcription",
+                      "created_at": "2024-01-15T09:30:00Z",
+                      "primary_language": "en",
+                      "hebrew_word_format": [
+                        "en",
+                        "he"
+                      ],
+                      "num_speakers": 1,
+                      "status": "COMPLETED",
+                      "duration": 1802.5,
+                      "model": "v1"
+                    }
+                  }
                 }
               }
             }
@@ -224,11 +248,17 @@
           {
             "name": "transcription_id",
             "in": "path",
-            "description": "ID of the transcription",
+            "description": "ID of the transcription. Use the ID returned from the Create Transcription endpoint.",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid"
+            },
+            "example": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
+            "examples": {
+              "Example1": {
+                "value": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32"
+              }
             }
           }
         ],
@@ -239,6 +269,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Transcription"
+                },
+                "examples": {
+                  "Example1": {
+                    "value": {
+                      "text": "Welcome to today's <i>shiur</i> שיעור. We will discuss the <i>halacha</i> הלכה regarding...",
+                      "timestamps": [
+                        {
+                          "word": "Welcome",
+                          "hebrew_word_format": null,
+                          "start": 0,
+                          "end": 0.5,
+                          "speaker": "1"
+                        },
+                        {
+                          "word": "shiur",
+                          "hebrew_word_format": [
+                            "en"
+                          ],
+                          "start": 2.1,
+                          "end": 2.8,
+                          "speaker": "1"
+                        }
+                      ],
+                      "info": {
+                        "id": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
+                        "title": "My Shiur Transcription",
+                        "created_at": "2024-01-15T09:30:00Z",
+                        "primary_language": "en",
+                        "hebrew_word_format": [
+                          "en",
+                          "he"
+                        ],
+                        "num_speakers": 1,
+                        "status": "COMPLETED",
+                        "duration": 1802.5,
+                        "model": "v1"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -295,7 +364,7 @@
         "properties": {
           "url": {
             "type": "string",
-            "description": "URL to extract the download link from. Must be from a supported site."
+            "description": "URL to extract a downloadable link from. This link must originate from a supported site. You can use the get supported sites endpoint to get a list of supported sites."
           }
         },
         "required": [
@@ -360,7 +429,7 @@
           "audio_file": {
             "type": "string",
             "nullable": true,
-            "description": "Base64 encoded audio file content. Either audio_url or audio_file must be provided, but not both."
+            "description": "Base64 encoded audio file content. Either audio_url or audio_file must be provided, but not both.\n\n## Base64 Encoding Example\n\n**Python:**\n```python\nimport base64\nfrom soferai import SoferAI\n\n# Initialize client\nclient = SoferAI(api_key=\"your_api_key_here\")\n\n# Read and encode audio file\nwith open(\"audio.mp3\", \"rb\") as f:\n    base64_audio = base64.b64encode(f.read()).decode('utf-8')\n\n# Create transcription request\nresponse = client.transcribe.create_transcription(\n    audio_file=base64_audio,\n    info={\n        \"model\": \"v1\",\n        \"primary_language\": \"en\", \n        \"hebrew_word_format\": [\"he\"],\n        \"title\": \"My Shiur Transcription\"\n    }\n)\n\nprint(f\"Transcription ID: {response}\")\n```"
           },
           "info": {
             "$ref": "#/components/schemas/TranscriptionRequestInfo",
@@ -455,12 +524,14 @@
           },
           "title": {
             "type": "string",
-            "description": "Title of the transcription"
+            "description": "Title of the transcription",
+            "example": "My Shiur Transcription"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the transcription was created"
+            "description": "When the transcription was created",
+            "example": "2024-01-15T09:30:00Z"
           },
           "primary_language": {
             "$ref": "#/components/schemas/Language",
@@ -475,7 +546,8 @@
           },
           "num_speakers": {
             "type": "integer",
-            "description": "Number of speakers in the audio. If more than 1, then speaker labeling is enabled (a pro feature)."
+            "description": "Number of speakers in the audio. If more than 1, then speaker labeling is enabled (a pro feature).",
+            "example": 1
           },
           "status": {
             "$ref": "#/components/schemas/Status",
@@ -484,7 +556,8 @@
           "duration": {
             "type": "integer",
             "format": "float",
-            "description": "Duration of the audio in seconds"
+            "description": "Duration of the audio in seconds",
+            "example": 1802.5
           },
           "model": {
             "type": "string",
@@ -509,7 +582,8 @@
         "properties": {
           "text": {
             "type": "string",
-            "description": "This field contains the transcription text. If the `primary_language` is English and only one `hebrew_word_format` is specified, the text will be in English with Hebrew words in the specified format. If multiple `hebrew_word_format` options are set, Hebrew words will appear in both formats, with the English transliteration in <i>Italics</i>. If the primary language is Hebrew, the text will be in Hebrew."
+            "description": "This field contains the transcription text. If the `primary_language` is English and only one `hebrew_word_format` is specified, the text will be in English with Hebrew words in the specified format. If multiple `hebrew_word_format` options are set, Hebrew words will appear in both formats, with the English transliteration in <i>Italics</i>. If the primary language is Hebrew, the text will be in Hebrew.",
+            "example": "Welcome to today's <i>shiur</i> שיעור. We will discuss the <i>halacha</i> הלכה regarding..."
           },
           "timestamps": {
             "type": "array",
