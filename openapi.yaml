@@ -104,6 +104,63 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TranscriptionRequest'
+  /v1/transcriptions/batch:
+    post:
+      description: Create multiple transcriptions to be processed in batch
+      operationId: transcribe_createBatchTranscription
+      tags:
+        - Transcribe
+      parameters: []
+      responses:
+        "200":
+          description: |-
+            Information about the created batch including batch ID and individual transcription IDs.
+            All transcriptions will be processed sequentially with delays between them.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchTranscriptionResponse'
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchTranscriptionRequest'
+  /v1/transcriptions/batch/{batch_id}/status:
+    get:
+      description: Get status of a batch transcription
+      operationId: transcribe_getBatchStatus
+      tags:
+        - Transcribe
+      parameters:
+        - name: batch_id
+          in: path
+          description: ID of the batch. Use the ID returned from the Create Batch Transcription endpoint.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchStatusResponse'
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/transcriptions/{transcription_id}/status:
     get:
       description: Get transcription status
@@ -292,6 +349,98 @@ components:
           description: Transcription parameters
       required:
         - info
+    BatchTranscriptionRequest:
+      title: BatchTranscriptionRequest
+      type: object
+      properties:
+        audio_sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudioSource'
+          description: List of audio sources to transcribe with the same settings. Each item should have either audio_url or audio_file.
+        info:
+          $ref: '#/components/schemas/TranscriptionRequestInfo'
+          description: Shared transcription parameters for all audio files in the batch
+        batch_title:
+          type: string
+          nullable: true
+          description: Optional title for the batch. The system will first check for a title in the Audio Source itself. If no title is provided there, it defaults to batch title providded here with "- Batch Item N" appended.
+        batch_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional ID for the batch. If not provided, a UUID will be generated.
+      required:
+        - audio_sources
+        - info
+    BatchTranscriptionResponse:
+      title: BatchTranscriptionResponse
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the batch
+        transcription_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptionId'
+          description: List of transcription IDs that were created for this batch
+        total_count:
+          type: integer
+          description: Total number of transcriptions in the batch
+        status:
+          $ref: '#/components/schemas/BatchStatus'
+          description: Current status of the batch
+      required:
+        - batch_id
+        - transcription_ids
+        - total_count
+        - status
+    BatchStatusResponse:
+      title: BatchStatusResponse
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the batch
+        status:
+          $ref: '#/components/schemas/BatchStatus'
+          description: Current status of the batch
+        total_count:
+          type: integer
+          description: Total number of transcriptions in the batch
+        completed_count:
+          type: integer
+          description: Number of transcriptions that have completed successfully
+        failed_count:
+          type: integer
+          description: Number of transcriptions that have failed
+        pending_count:
+          type: integer
+          description: Number of transcriptions still pending or processing
+        transcriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptionInfo'
+          description: List of transcription statuses in the batch
+      required:
+        - batch_id
+        - status
+        - total_count
+        - completed_count
+        - failed_count
+        - pending_count
+        - transcriptions
+    BatchStatus:
+      title: BatchStatus
+      type: string
+      enum:
+        - RECEIVED
+        - PROCESSING
+        - COMPLETED
+        - FAILED
     Language:
       title: Language
       type: string
@@ -487,6 +636,26 @@ components:
         - old_timestamps
         - edited_text
         - language_to_update
+    AudioSource:
+      title: AudioSource
+      type: object
+      properties:
+        audio_url:
+          type: string
+          nullable: true
+          description: URL to a downloadable audio file. Either audio_url or audio_file must be provided, but not both.
+        audio_file:
+          type: string
+          nullable: true
+          description: Base64 encoded audio file content. Either audio_url or audio_file must be provided, but not both.
+        title:
+          type: string
+          nullable: true
+          description: An optional title for this specific audio file. If a title is not provided, the system will use the batch title followed by "Batch Item i+1". If neither a specific title nor a batch title is available, it will default to "Batch Item i+1". This ensures each audio file has a unique identifier within the batch.
+        id:
+          $ref: '#/components/schemas/TranscriptionId'
+          nullable: true
+          description: An optional UUID for this specific audio file. If an ID is not provided, the system will generate a UUID for the audio file.
   securitySchemes:
     BearerAuth:
       type: http
