@@ -6,7 +6,7 @@ info:
 paths:
   /v1/balance/:
     get:
-      description: Get account balance in cents
+      description: Get account balance showing available balance and pending charges
       operationId: balance_getBalance
       tags:
         - Balance
@@ -87,7 +87,9 @@ paths:
       parameters: []
       responses:
         "200":
-          description: "The unique identifier for the newly created transcription. \nUse this ID to check the status of the transcription or to retrieve the transcription result."
+          description: |-
+            The unique identifier for the newly created transcription.
+            Use this ID to check the status of the transcription or to retrieve the transcription result.
           content:
             application/json:
               schema:
@@ -275,11 +277,27 @@ components:
       title: Balance
       type: object
       properties:
-        cents_remaining:
+        total_balance:
           type: integer
-          description: The amount remaining in the billing account associated with the API user, represented in cents.
+          description: The total balance in the account, not subtracting pending charges, represented in cents.
+        available_balance:
+          type: integer
+          description: The available balance after accounting for pending charges, represented in cents. This is the amount that can be used for new transcriptions.
+        pending_balance:
+          type: integer
+          description: The amount of pending charges from transcriptions that are in progress or queued, represented in cents.
+        all_time_deposits:
+          type: integer
+          description: The total amount ever deposited into the account, represented in cents.
+        all_time_spend:
+          type: integer
+          description: The total amount ever spent on completed transcriptions, represented in cents.
       required:
-        - cents_remaining
+        - total_balance
+        - available_balance
+        - pending_balance
+        - all_time_deposits
+        - all_time_spend
     HealthResponse:
       title: HealthResponse
       type: object
@@ -343,7 +361,36 @@ components:
         audio_file:
           type: string
           nullable: true
-          description: "Base64 encoded audio file content. Either audio_url or audio_file must be provided, but not both.\n\n## Base64 Encoding Example\n\n**Python:**\n```python\nimport base64\nfrom soferai import SoferAI\n\n# Initialize client\nclient = SoferAI(api_key=\"your_api_key_here\")\n\n# Read and encode audio file\nwith open(\"audio.mp3\", \"rb\") as f:\n    base64_audio = base64.b64encode(f.read()).decode('utf-8')\n\n# Create transcription request\nresponse = client.transcribe.create_transcription(\n    audio_file=base64_audio,\n    info={\n        \"model\": \"v1\",\n        \"primary_language\": \"en\", \n        \"hebrew_word_format\": [\"he\"],\n        \"title\": \"My Shiur Transcription\"\n    }\n)\n\nprint(f\"Transcription ID: {response}\")\n```"
+          description: |-
+            Base64 encoded audio file content. Either audio_url or audio_file must be provided, but not both.
+
+            ## Base64 Encoding Example
+
+            **Python:**
+            ```python
+            import base64
+            from soferai import SoferAI
+
+            # Initialize client
+            client = SoferAI(api_key="your_api_key_here")
+
+            # Read and encode audio file
+            with open("audio.mp3", "rb") as f:
+                base64_audio = base64.b64encode(f.read()).decode('utf-8')
+
+            # Create transcription request
+            response = client.transcribe.create_transcription(
+                audio_file=base64_audio,
+                info={
+                    "model": "v1",
+                    "primary_language": "en",
+                    "hebrew_word_format": ["he"],
+                    "title": "My Shiur Transcription"
+                }
+            )
+
+            print(f"Transcription ID: {response}")
+            ```
         info:
           $ref: '#/components/schemas/TranscriptionRequestInfo'
           description: Transcription parameters
