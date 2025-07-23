@@ -106,6 +106,27 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TranscriptionRequest'
+    get:
+      description: Get all transcriptions for the authenticated user
+      operationId: transcribe_listTranscriptions
+      tags:
+        - Transcribe
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TranscriptionSummary'
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/transcriptions/batch:
     post:
       description: Create multiple transcriptions to be processed in batch
@@ -516,6 +537,8 @@ components:
         - COMPLETED
         - CANCELLED
         - FAILED
+        - UPLOADED
+        - INSUFFICIENT_FUNDS
     TranscriptionRequestInfo:
       title: TranscriptionRequestInfo
       type: object
@@ -526,8 +549,8 @@ components:
           description: |-
             Model to be used for the transcription. Default is "v1".
             - v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.
-            Priced at 1.50 USD per hour of audio transcribed.
-            - v0: Suitable for audio with fewer Hebrew words.
+            Priced at 1.20 USD per hour of audio transcribed.
+            - v0: Not generally recommended. Cheaper, but less accurate.
             Priced at 1.00 USD per hour.
         id:
           $ref: '#/components/schemas/TranscriptionId'
@@ -703,6 +726,23 @@ components:
           $ref: '#/components/schemas/TranscriptionId'
           nullable: true
           description: An optional UUID for this specific audio file. If an ID is not provided, the system will generate a UUID for the audio file.
+    TranscriptionSummary:
+      title: TranscriptionSummary
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/TranscriptionId'
+          description: ID of the transcription
+        title:
+          type: string
+          description: Title of the transcription
+        status:
+          $ref: '#/components/schemas/Status'
+          description: Current status of the transcription
+      required:
+        - id
+        - title
+        - status
   securitySchemes:
     BearerAuth:
       type: http
