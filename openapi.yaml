@@ -22,6 +22,242 @@ paths:
           description: ""
       security:
         - BearerAuth: []
+  /v1/categories/:
+    post:
+      description: Create a new category
+      operationId: categories_createCategory
+      tags:
+        - Categories
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "409":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+    get:
+      description: Get all categories for the authenticated user
+      operationId: categories_listCategories
+      tags:
+        - Categories
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+      security:
+        - BearerAuth: []
+  /v1/categories/{category_id}:
+    get:
+      description: Get a specific category by ID
+      operationId: categories_getCategory
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
+    put:
+      description: Update an existing category
+      operationId: categories_updateCategory
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "404":
+          description: ""
+        "409":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+    delete:
+      description: Delete a category (this will also remove all transcription associations)
+      operationId: categories_deleteCategory
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Returns success message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCategoryResponse'
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/categories/{category_id}/transcriptions:
+    post:
+      description: Add a transcription to a category
+      operationId: categories_addTranscriptionToCategory
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Returns success message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddTranscriptionToCategoryResponse'
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTranscriptionToCategoryRequest'
+    get:
+      description: Get all transcriptions in a specific category
+      operationId: categories_getCategoryTranscriptions
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryTranscription'
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/categories/{category_id}/transcriptions/{transcription_id}:
+    delete:
+      description: Remove a transcription from a category
+      operationId: categories_removeTranscriptionFromCategory
+      tags:
+        - Categories
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: transcription_id
+          in: path
+          description: ID of the transcription to remove
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Returns success message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveTranscriptionFromCategoryResponse'
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/categories/by-transcription/{transcription_id}:
+    get:
+      description: Get all categories for a specific transcription
+      operationId: categories_getTranscriptionCategories
+      tags:
+        - Categories
+      parameters:
+        - name: transcription_id
+          in: path
+          description: ID of the transcription
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+      security:
+        - BearerAuth: []
   /v1/health/:
     get:
       operationId: health_getHealth
@@ -319,6 +555,146 @@ components:
         - pending_balance
         - all_time_deposits
         - all_time_spend
+    CreateCategoryRequest:
+      title: CreateCategoryRequest
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the category
+        color_hex:
+          type: string
+          nullable: true
+          description: Hex color code for the category (e.g.,
+      required:
+        - name
+    UpdateCategoryRequest:
+      title: UpdateCategoryRequest
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: New name for the category
+        color_hex:
+          type: string
+          nullable: true
+          description: New hex color code for the category (e.g.,
+    AddTranscriptionToCategoryRequest:
+      title: AddTranscriptionToCategoryRequest
+      type: object
+      properties:
+        transcription_id:
+          type: string
+          format: uuid
+          description: ID of the transcription to add to the category
+        position:
+          type: integer
+          nullable: true
+          description: Optional position within the category for ordering
+      required:
+        - transcription_id
+    Category:
+      title: Category
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the category
+        name:
+          type: string
+          description: Name of the category
+        color_hex:
+          type: string
+          description: Hex color code for the category
+        created_at:
+          type: string
+          format: date-time
+          description: When the category was created
+        transcription_count:
+          type: integer
+          nullable: true
+          description: Number of transcriptions in this category
+      required:
+        - id
+        - name
+        - color_hex
+        - created_at
+    CategoryTranscription:
+      title: CategoryTranscription
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID of the transcription
+        title:
+          type: string
+          description: Title of the transcription
+        status:
+          type: string
+          description: Current status of the transcription
+        position:
+          type: integer
+          nullable: true
+          description: Position of this transcription within the category
+      required:
+        - id
+        - title
+        - status
+    DeleteCategoryResponse:
+      title: DeleteCategoryResponse
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+        deleted_id:
+          type: string
+          format: uuid
+          description: ID of the deleted category
+      required:
+        - message
+        - deleted_id
+    AddTranscriptionToCategoryResponse:
+      title: AddTranscriptionToCategoryResponse
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+        category_id:
+          type: string
+          format: uuid
+          description: ID of the category
+        transcription_id:
+          type: string
+          format: uuid
+          description: ID of the transcription
+      required:
+        - message
+        - category_id
+        - transcription_id
+    RemoveTranscriptionFromCategoryResponse:
+      title: RemoveTranscriptionFromCategoryResponse
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+        category_id:
+          type: string
+          format: uuid
+          description: ID of the category
+        transcription_id:
+          type: string
+          format: uuid
+          description: ID of the transcription
+      required:
+        - message
+        - category_id
+        - transcription_id
     HealthResponse:
       title: HealthResponse
       type: object
@@ -371,6 +747,28 @@ components:
       required:
         - name
         - url
+    AudioChunk:
+      title: AudioChunk
+      type: object
+      description: Binary chunk of PCM audio streamed from the client.
+      properties:
+        data:
+          type: string
+          description: PCM audio data chunk
+        mime_type:
+          type: string
+      required:
+        - data
+        - mime_type
+    TranscriptChunk:
+      title: TranscriptChunk
+      type: object
+      description: Partial (or final) transcript text streamed from server.
+      properties:
+        text:
+          type: string
+      required:
+        - text
     TranscriptionRequest:
       title: TranscriptionRequest
       type: object
@@ -623,8 +1021,8 @@ components:
         duration:
           type: integer
           format: float
-          description: Duration of the audio in seconds
-          example: 1802.5
+          nullable: true
+          description: Duration of the audio in seconds. If None, it means the duration was not calculated yet.
         model:
           type: string
           nullable: true
@@ -637,7 +1035,6 @@ components:
         - hebrew_word_format
         - num_speakers
         - status
-        - duration
     Transcription:
       title: Transcription
       type: object
