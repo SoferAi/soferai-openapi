@@ -508,6 +508,52 @@
         "summary": "Get supported sites"
       }
     },
+    "/v1/timestamps/outline": {
+      "post": {
+        "description": "Outline of topics discussed by timestamp, generated end-to-end from a transcription ID.\n\nThis endpoint will:\n1) Fetch the transcript and word-level timestamps for the given transcription\n2) Generate chapter topics (title + starting_phrase) using an LLM from the transcript text\n3) Align each topic's starting phrase to timestamps",
+        "operationId": "timestamps_outline",
+        "tags": [
+          "Timestamps"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OutlineTopic"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutlineRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/transcriptions/": {
       "post": {
         "description": "Create a new transcription",
@@ -837,6 +883,49 @@
           }
         ]
       }
+    },
+    "/v1/utils/duration": {
+      "post": {
+        "description": "Returns the audio duration in seconds for a provided URL or base64-encoded file.\n\nProvide either `audio_url` or `audio_file` (base64). If both are provided, the request is invalid.",
+        "operationId": "utils_getDuration",
+        "tags": [
+          "Utils"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DurationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DurationRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1161,6 +1250,108 @@
         },
         "required": [
           "text"
+        ]
+      },
+      "Confidence": {
+        "title": "Confidence",
+        "type": "string",
+        "enum": [
+          "HIGH",
+          "MEDIUM",
+          "LOW",
+          "NONE"
+        ]
+      },
+      "OutlineRequest": {
+        "title": "OutlineRequest",
+        "type": "object",
+        "properties": {
+          "transcription_id": {
+            "$ref": "#/components/schemas/TranscriptionId",
+            "description": "ID of the transcription to process end-to-end"
+          },
+          "monotone": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "If true, each topic is searched after the previous topic's start (with a small backoff)"
+          },
+          "conclusion_bias": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "If true and a title includes the word \"conclusion\", search in the last third of the audio"
+          }
+        },
+        "required": [
+          "transcription_id"
+        ]
+      },
+      "OutlineTopic": {
+        "title": "OutlineTopic",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title of the topic"
+          },
+          "starting_phrase": {
+            "type": "string",
+            "description": "Starting phrase that was searched for"
+          },
+          "start_time_sec": {
+            "type": "integer",
+            "format": "float",
+            "nullable": true,
+            "description": "Start time in seconds for the best-aligned phrase (if found)"
+          },
+          "matched_text": {
+            "type": "string",
+            "description": "The transcript text segment best matching the starting phrase"
+          },
+          "score_norm": {
+            "type": "number",
+            "format": "double",
+            "description": "Normalized alignment score in [0,1]"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "description": "Confidence bucket derived from the normalized score"
+          },
+          "token_span": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "nullable": true,
+            "description": "Optional span of token indices [start, end) for the best match"
+          },
+          "matched_content": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of matched content tokens (excludes stopwords/fillers)"
+          },
+          "content_coverage": {
+            "type": "integer",
+            "format": "float",
+            "nullable": true,
+            "description": "Fraction of content tokens in the phrase that were matched"
+          },
+          "longest_content_run_soft": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Longest soft contiguous run of content-token matches"
+          },
+          "longest_content_run_strict": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Longest strict contiguous run of content-token matches"
+          }
+        },
+        "required": [
+          "title",
+          "starting_phrase",
+          "matched_text",
+          "score_norm",
+          "confidence"
         ]
       },
       "TranscriptionRequest": {
@@ -1582,6 +1773,36 @@
           "id",
           "title",
           "status"
+        ]
+      },
+      "DurationRequest": {
+        "title": "DurationRequest",
+        "type": "object",
+        "properties": {
+          "audio_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Direct URL to a downloadable audio file."
+          },
+          "audio_file": {
+            "type": "string",
+            "nullable": true,
+            "description": "Base64-encoded audio file content. Do not include a data URI prefix."
+          }
+        }
+      },
+      "DurationResponse": {
+        "title": "DurationResponse",
+        "type": "object",
+        "properties": {
+          "duration_seconds": {
+            "type": "number",
+            "format": "double",
+            "description": "Duration of the audio in seconds. Returns 0 if the duration cannot be determined."
+          }
+        },
+        "required": [
+          "duration_seconds"
         ]
       }
     },
