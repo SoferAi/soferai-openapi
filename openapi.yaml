@@ -314,6 +314,79 @@ paths:
                 items:
                   $ref: '#/components/schemas/Site'
       summary: Get supported sites
+  /v1/maishiv/knowledge-base:
+    post:
+      description: Add a document to the knowledge base.
+      operationId: maishiv_addToKnowledgeBase
+      tags:
+        - Maishiv
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddKnowledgeBaseDocumentResponse'
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddKnowledgeBaseDocumentRequest'
+    get:
+      description: Get all document IDs currently in the knowledge base.
+      operationId: maishiv_listKnowledgeBaseDocs
+      tags:
+        - Maishiv
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/maishiv/knowledge-base/{document_id}:
+    delete:
+      description: Remove a document from the knowledge base.
+      operationId: maishiv_removeFromKnowledgeBase
+      tags:
+        - Maishiv
+      parameters:
+        - name: document_id
+          in: path
+          description: ID of the document to remove from the knowledge base.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveKnowledgeBaseDocumentResponse'
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/timestamps/outline:
     post:
       description: |-
@@ -832,6 +905,41 @@ components:
           type: string
       required:
         - text
+    AddKnowledgeBaseDocumentRequest:
+      title: AddKnowledgeBaseDocumentRequest
+      type: object
+      properties:
+        document_id:
+          type: string
+          description: ID of the document to add to the knowledge base.
+      required:
+        - document_id
+    AddKnowledgeBaseDocumentResponse:
+      title: AddKnowledgeBaseDocumentResponse
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: True if the document was successfully added.
+        message:
+          type: string
+          nullable: true
+          description: Optional message describing the outcome (e.g., already exists).
+      required:
+        - success
+    RemoveKnowledgeBaseDocumentResponse:
+      title: RemoveKnowledgeBaseDocumentResponse
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: True if the document was successfully removed or was not present.
+        message:
+          type: string
+          nullable: true
+          description: Optional message describing the outcome (e.g., not found).
+      required:
+        - success
     Confidence:
       title: Confidence
       type: string
