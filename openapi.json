@@ -1004,6 +1004,102 @@
         ]
       }
     },
+    "/v1/transformations/{transcription_id}/summary": {
+      "post": {
+        "description": "Generate a Markdown summary for a transcription. If a summary already exists, it is returned.",
+        "operationId": "transformations_generateSummary",
+        "tags": [
+          "Transformations"
+        ],
+        "parameters": [
+          {
+            "name": "transcription_id",
+            "in": "path",
+            "description": "ID of the transcription to summarize",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateTranscriptSummaryRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Get the Markdown summary for a transcription if it exists.",
+        "operationId": "transformations_getSummary",
+        "tags": [
+          "Transformations"
+        ],
+        "parameters": [
+          {
+            "name": "transcription_id",
+            "in": "path",
+            "description": "ID of the transcription to fetch summary for",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/utils/duration": {
       "post": {
         "description": "Returns the audio duration in seconds for a provided URL or base64-encoded file.\n\nProvide either `audio_url` or `audio_file` (base64). If both are provided, the request is invalid.",
@@ -1942,6 +2038,33 @@
           "id",
           "title",
           "status"
+        ]
+      },
+      "GenerateTranscriptSummaryRequest": {
+        "title": "GenerateTranscriptSummaryRequest",
+        "type": "object",
+        "properties": {
+          "transcription_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the transcription to summarize"
+          }
+        },
+        "required": [
+          "transcription_id"
+        ]
+      },
+      "TranscriptSummaryResponse": {
+        "title": "TranscriptSummaryResponse",
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "Markdown summary of the transcription"
+          }
+        },
+        "required": [
+          "summary"
         ]
       },
       "DurationRequest": {
