@@ -935,6 +935,16 @@
                 "value": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32"
               }
             }
+          },
+          {
+            "name": "filter_hebrew_word_format",
+            "in": "query",
+            "description": "Optionally filter the response to a single Hebrew word format. If set to \"en\", the response text will have Hebrew characters removed and timestamps will exclude words tagged with \"he\". If set to \"he\", italicized transliterations are removed from the text and timestamps will exclude words tagged only with \"en\".",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
           }
         ],
         "responses": {
