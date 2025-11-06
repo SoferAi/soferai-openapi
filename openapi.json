@@ -674,6 +674,52 @@
         }
       }
     },
+    "/v1/timestamps/update-timestamps": {
+      "post": {
+        "description": "Update the timestamps based on edited text.",
+        "operationId": "timestamps_updateTimestamps",
+        "tags": [
+          "Timestamps"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Timestamp"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTimestampsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/transcriptions/": {
       "post": {
         "description": "Create a new transcription",
@@ -939,7 +985,7 @@
           {
             "name": "filter_hebrew_word_format",
             "in": "query",
-            "description": "Optionally filter the response to a single Hebrew word format. If set to \"en\", the response text will have Hebrew characters removed and timestamps will exclude words tagged with \"he\". If set to \"he\", italicized transliterations are removed from the text and timestamps will exclude words tagged only with \"en\".",
+            "description": "Filter response to a single Hebrew word format (en or he)",
             "required": false,
             "schema": {
               "type": "string",
@@ -1629,6 +1675,32 @@
           "confidence"
         ]
       },
+      "UpdateTimestampsRequest": {
+        "title": "UpdateTimestampsRequest",
+        "type": "object",
+        "properties": {
+          "old_timestamps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Timestamp"
+            },
+            "description": "The original timestamps associated with the text before editing. These will be used as reference points to align the new timestamps."
+          },
+          "edited_text": {
+            "type": "string",
+            "description": "The modified version of the transcription text that needs updated timestamp alignments. This should be the complete text after your edits."
+          },
+          "language_to_update": {
+            "$ref": "#/components/schemas/Language",
+            "nullable": true,
+            "description": "Specifies which language version of the timestamps to update. Must be either 'en' for English or 'he' for Hebrew timestamps."
+          }
+        },
+        "required": [
+          "old_timestamps",
+          "edited_text"
+        ]
+      },
       "TranscriptionRequest": {
         "title": "TranscriptionRequest",
         "type": "object",
@@ -1973,32 +2045,6 @@
           "word",
           "start",
           "end"
-        ]
-      },
-      "UpdateTimestampsRequest": {
-        "title": "UpdateTimestampsRequest",
-        "type": "object",
-        "properties": {
-          "old_timestamps": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Timestamp"
-            },
-            "description": "The original timestamps associated with the text before editing. These will be used as reference points to align the new timestamps."
-          },
-          "edited_text": {
-            "type": "string",
-            "description": "The modified version of the transcription text that needs updated timestamp alignments. This should be the complete text after your edits."
-          },
-          "language_to_update": {
-            "$ref": "#/components/schemas/Language",
-            "description": "Specifies which language version of the timestamps to update. Must be either 'en' for English or 'he' for Hebrew timestamps."
-          }
-        },
-        "required": [
-          "old_timestamps",
-          "edited_text",
-          "language_to_update"
         ]
       },
       "AudioSource": {
