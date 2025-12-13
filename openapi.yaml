@@ -526,6 +526,80 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BatchTranscriptionRequest'
+  /v1/transcriptions/batch-files:
+    post:
+      description: Upload a batch manifest (JSON array or JSONL)
+      operationId: transcribe_uploadBatchFile
+      tags:
+        - Transcribe
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchFileUploadResponse'
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchFileUploadRequest'
+    get:
+      description: List uploaded batch files for the authenticated user
+      operationId: transcribe_listBatchFiles
+      tags:
+        - Transcribe
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBatchFilesResponse'
+        "401":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/transcriptions/batch-files/{batch_file_id}:
+    get:
+      description: Get a single batch file's metadata and validation status
+      operationId: transcribe_getBatchFile
+      tags:
+        - Transcribe
+      parameters:
+        - name: batch_file_id
+          in: path
+          description: ID of the batch file
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchFileDetail'
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/transcriptions/batch/{batch_id}/status:
     get:
       description: Get status of a batch transcription
@@ -1128,7 +1202,7 @@ components:
         language_to_update:
           $ref: '#/components/schemas/Language'
           nullable: true
-          description: Specifies which language version of the timestamps to update. Must be either 'en' for English or 'he' for Hebrew timestamps.
+          description: If hebrew_word_format included both 'en' and 'he' (and therefor, for the same word there is both an English and a Hebrew version),this specifies which language version of the timestamps to update. Must be either 'en' for English or 'he' for Hebrew timestamps.
       required:
         - old_timestamps
         - edited_text
@@ -1182,11 +1256,17 @@ components:
       title: BatchTranscriptionRequest
       type: object
       properties:
+        batch_file_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Batch file to process in standard mode. Required when processing_mode is "standard"; not allowed when processing_mode is "express".
         audio_sources:
           type: array
           items:
-            $ref: '#/components/schemas/AudioSource'
-          description: List of audio sources to transcribe with the same settings. Each item should have either audio_url or audio_file.
+            $ref: '#/components/schemas/BatchAudioSource'
+          nullable: true
+          description: List of audio sources to transcribe with the same settings. Only allowed when processing_mode is "express"; not allowed when processing_mode is "standard".
         info:
           $ref: '#/components/schemas/TranscriptionRequestInfo'
           description: Shared transcription parameters for all audio files in the batch
@@ -1199,8 +1279,14 @@ components:
           format: uuid
           nullable: true
           description: Optional ID for the batch. If not provided, a UUID will be generated.
+        processing_mode:
+          $ref: '#/components/schemas/ProcessingMode'
+          nullable: true
+          description: |-
+            Processing speed and cost tier.
+            - standard: (Default) Processed within 24 hours. Lower cost. Requires batch_file_id and disallows inline audio_sources.
+            - express: Processed immediately. Higher cost. Limited to 10 files per batch. Requires inline audio_sources and disallows batch_file_id.
       required:
-        - audio_sources
         - info
     BatchTranscriptionResponse:
       title: BatchTranscriptionResponse
@@ -1270,6 +1356,192 @@ components:
         - PROCESSING
         - COMPLETED
         - FAILED
+    ProcessingMode:
+      title: ProcessingMode
+      type: string
+      enum:
+        - standard
+        - express
+    BatchFileContentType:
+      title: BatchFileContentType
+      type: string
+      enum:
+        - json
+        - jsonl
+    BatchFileStatus:
+      title: BatchFileStatus
+      type: string
+      enum:
+        - PENDING_VALIDATION
+        - VALID
+        - INVALID
+    BatchFileMetadata:
+      title: BatchFileMetadata
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+          description: Optional title for this batch file manifest.
+        description:
+          type: string
+          nullable: true
+          description: Optional description for this batch file manifest.
+    BatchFileUploadRequest:
+      title: BatchFileUploadRequest
+      type: object
+      properties:
+        content_type:
+          $ref: '#/components/schemas/BatchFileContentType'
+          description: Format of the manifest payload. Use "json" for an array and "jsonl" for one JSON object per line separated by \n.
+        json_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchAudioSource'
+          nullable: true
+          description: When content_type is "json", provide the items as an array. Mutually exclusive with jsonl.
+        jsonl:
+          type: string
+          nullable: true
+          description: When content_type is "jsonl", provide the raw JSON Lines payload. One JSON object per line separated by \n. Mutually exclusive with json_items.
+        metadata:
+          $ref: '#/components/schemas/BatchFileMetadata'
+          nullable: true
+          description: Optional metadata to associate with the uploaded batch file.
+      required:
+        - content_type
+    BatchFileUploadResponse:
+      title: BatchFileUploadResponse
+      type: object
+      properties:
+        batch_file_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the uploaded batch file.
+        item_count:
+          type: integer
+          description: Number of items detected in the manifest.
+        size_bytes:
+          type: integer
+          description: Size of the uploaded manifest in bytes.
+        checksum:
+          type: string
+          nullable: true
+          description: Optional checksum of the manifest payload.
+        created_at:
+          type: string
+          format: date-time
+          description: When the manifest was uploaded.
+        status:
+          $ref: '#/components/schemas/BatchFileStatus'
+          description: Current validation status of the manifest.
+        validation_errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Validation errors if the status is INVALID.
+      required:
+        - batch_file_id
+        - item_count
+        - size_bytes
+        - created_at
+        - status
+    BatchFileSummary:
+      title: BatchFileSummary
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID of the batch file.
+        created_at:
+          type: string
+          format: date-time
+          description: When the manifest was uploaded.
+        item_count:
+          type: integer
+          description: Number of items detected in the manifest.
+        size_bytes:
+          type: integer
+          description: Size of the uploaded manifest in bytes.
+        status:
+          $ref: '#/components/schemas/BatchFileStatus'
+          description: Current validation status of the manifest.
+        checksum:
+          type: string
+          nullable: true
+          description: Optional checksum of the manifest payload.
+        title:
+          type: string
+          nullable: true
+          description: Optional title from metadata.
+      required:
+        - id
+        - created_at
+        - item_count
+        - size_bytes
+        - status
+    BatchFileDetail:
+      title: BatchFileDetail
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID of the batch file.
+        created_at:
+          type: string
+          format: date-time
+          description: When the manifest was uploaded.
+        item_count:
+          type: integer
+          description: Number of items detected in the manifest.
+        size_bytes:
+          type: integer
+          description: Size of the uploaded manifest in bytes.
+        status:
+          $ref: '#/components/schemas/BatchFileStatus'
+          description: Current validation status of the manifest.
+        checksum:
+          type: string
+          nullable: true
+          description: Optional checksum of the manifest payload.
+        title:
+          type: string
+          nullable: true
+          description: Optional title from metadata.
+        description:
+          type: string
+          nullable: true
+          description: Optional description from metadata.
+        validation_errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Validation errors if the status is INVALID.
+      required:
+        - id
+        - created_at
+        - item_count
+        - size_bytes
+        - status
+    ListBatchFilesResponse:
+      title: ListBatchFilesResponse
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchFileSummary'
+          description: Batch files visible to the authenticated user.
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor for pagination if more results are available.
+      required:
+        - files
     Language:
       title: Language
       type: string
@@ -1448,18 +1720,13 @@ components:
         - word
         - start
         - end
-    AudioSource:
-      title: AudioSource
+    BatchAudioSource:
+      title: BatchAudioSource
       type: object
       properties:
         audio_url:
           type: string
-          nullable: true
-          description: URL to a downloadable audio file. Either audio_url or audio_file must be provided, but not both.
-        audio_file:
-          type: string
-          nullable: true
-          description: Base64 encoded audio file content. Either audio_url or audio_file must be provided, but not both.
+          description: URL to a downloadable audio file.
         title:
           type: string
           nullable: true
@@ -1468,6 +1735,8 @@ components:
           $ref: '#/components/schemas/TranscriptionId'
           nullable: true
           description: An optional UUID for this specific audio file. If an ID is not provided, the system will generate a UUID for the audio file.
+      required:
+        - audio_url
     TranscriptionSummary:
       title: TranscriptionSummary
       type: object
