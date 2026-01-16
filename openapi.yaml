@@ -387,6 +387,57 @@ paths:
           description: ""
       security:
         - BearerAuth: []
+  /v1/ocr/jobs:
+    post:
+      description: Create an OCR job for a file already uploaded to Supabase Storage.
+      operationId: ocr_createOcrJob
+      tags:
+        - Ocr
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrJobResponse'
+        "401":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OcrJobCreateRequest'
+  /v1/ocr/jobs/{job_id}:
+    get:
+      description: Get OCR job status and extracted text for each page.
+      operationId: ocr_getOcrJob
+      tags:
+        - Ocr
+      parameters:
+        - name: job_id
+          in: path
+          description: OCR job id.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrJobStatus'
+        "401":
+          description: ""
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/timestamps/outline:
     post:
       description: |-
@@ -500,20 +551,44 @@ paths:
         - BearerAuth: []
   /v1/transcriptions/batch:
     post:
-      description: Create multiple transcriptions to be processed in batch
+      description: |-
+        Create multiple transcriptions in a single batch request.
+
+        **Choose a processing mode:**
+
+        - **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request.
+        - **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch File](/api-reference/transcribe/upload-batch-file), then pass the `batch_file_id` here.
+
+        All files in the batch share the same transcription settings (model, language, etc.) defined in `info`.
       operationId: transcribe_createBatchTranscription
       tags:
         - Transcribe
       parameters: []
       responses:
         "200":
-          description: |-
-            Information about the created batch including batch ID and individual transcription IDs.
-            All transcriptions will be processed sequentially with delays between them.
+          description: Returns the batch ID and individual transcription IDs. Use [Get Batch Status](/api-reference/transcribe/get-batch-status) to track progress.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchTranscriptionResponse'
+              examples:
+                express_mode:
+                  value:
+                    batch_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                    transcription_ids:
+                      - d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32
+                      - e6f0d95a-d3c3-5ca5-c5c1-8aad8b0aad43
+                    total_count: 2
+                    status: RECEIVED
+                standard_mode:
+                  value:
+                    batch_id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+                    transcription_ids:
+                      - c7d8e9f0-a1b2-3456-cdef-789012345678
+                      - d8e9f0a1-b2c3-4567-def0-890123456789
+                      - e9f0a1b2-c3d4-5678-ef01-901234567890
+                    total_count: 3
+                    status: RECEIVED
         "401":
           description: ""
         "429":
@@ -526,9 +601,45 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BatchTranscriptionRequest'
+            examples:
+              express_mode:
+                value:
+                  audio_sources:
+                    - audio_url: https://example.com/audio1.mp3
+                      title: Rabbi Cohen's Shiur on Shabbos
+                    - audio_url: https://example.com/audio2.mp3
+                      title: Rabbi Cohen's Shiur on Kashrus
+                  info:
+                    model: v1
+                    primary_language: en
+                    hebrew_word_format:
+                      - en
+                      - he
+                    num_speakers: 1
+                  batch_title: Rabbi Cohen Shiurim
+                  processing_mode: express
+              standard_mode:
+                value:
+                  batch_file_id: f1234567-89ab-cdef-0123-456789abcdef
+                  info:
+                    model: v1
+                    primary_language: en
+                    hebrew_word_format:
+                      - en
+                      - he
+                    num_speakers: 1
+                  batch_title: Weekly Shiurim Collection
+                  processing_mode: standard
   /v1/transcriptions/batch-files:
     post:
-      description: Upload a batch manifest (JSON array or JSONL)
+      description: |-
+        Upload a batch manifest containing audio URLs for standard mode batch processing.
+
+        **Workflow:**
+        1. Upload your manifest here to get a `batch_file_id`
+        2. Use that ID in [Create Batch Transcription](/api-reference/transcribe/create-batch-transcription) with `processing_mode: "standard"`
+
+        The manifest is a list of audio sources (max 500), each with a URL and optional title. You can provide it as a JSON array or JSONL format.
       operationId: transcribe_uploadBatchFile
       tags:
         - Transcribe
@@ -540,6 +651,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchFileUploadResponse'
+              examples:
+                json_format:
+                  value:
+                    batch_file_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                    item_count: 3
+                    size_bytes: 256
+                    created_at: "2024-01-15T09:30:00Z"
+                    status: VALID
+                jsonl_format:
+                  value:
+                    batch_file_id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+                    item_count: 2
+                    size_bytes: 128
+                    created_at: "2024-01-15T09:30:00Z"
+                    status: VALID
         "401":
           description: ""
         "429":
@@ -552,8 +678,28 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BatchFileUploadRequest'
+            examples:
+              json_format:
+                value:
+                  content_type: json
+                  json_items:
+                    - audio_url: https://example.com/shiur1.mp3
+                      title: Parshas Bereishis - Rabbi Cohen
+                    - audio_url: https://example.com/shiur2.mp3
+                      title: Parshas Noach - Rabbi Cohen
+                    - audio_url: https://example.com/shiur3.mp3
+                      title: Parshas Lech Lecha - Rabbi Cohen
+                  metadata:
+                    title: Rabbi Cohen Weekly Parsha Series
+                    description: Shiurim from Fall 2024
+              jsonl_format:
+                value:
+                  content_type: jsonl
+                  jsonl: |-
+                    {"audio_url": "https://example.com/shiur1.mp3", "title": "Shiur 1"}
+                    {"audio_url": "https://example.com/shiur2.mp3", "title": "Shiur 2"}
     get:
-      description: List uploaded batch files for the authenticated user
+      description: List all batch file manifests you've uploaded. Use this to find a `batch_file_id` for starting a standard mode batch.
       operationId: transcribe_listBatchFiles
       tags:
         - Transcribe
@@ -573,14 +719,14 @@ paths:
         - BearerAuth: []
   /v1/transcriptions/batch-files/{batch_file_id}:
     get:
-      description: Get a single batch file's metadata and validation status
+      description: Get details about a specific batch file manifest, including its validation status. Check this after uploading to ensure your manifest is valid before starting a batch.
       operationId: transcribe_getBatchFile
       tags:
         - Transcribe
       parameters:
         - name: batch_file_id
           in: path
-          description: ID of the batch file
+          description: The batch file ID returned from [Upload Batch File](/api-reference/transcribe/upload-batch-file)
           required: true
           schema:
             type: string
@@ -602,18 +748,22 @@ paths:
         - BearerAuth: []
   /v1/transcriptions/batch/{batch_id}/status:
     get:
-      description: Get status of a batch transcription
+      description: Check the progress of a batch transcription. Returns counts of completed, failed, and pending transcriptions, plus details for each individual transcription.
       operationId: transcribe_getBatchStatus
       tags:
         - Transcribe
       parameters:
         - name: batch_id
           in: path
-          description: ID of the batch. Use the ID returned from the Create Batch Transcription endpoint.
+          description: The batch ID returned from [Create Batch Transcription](/api-reference/transcribe/create-batch-transcription)
           required: true
           schema:
             type: string
             format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          examples:
+            Example1:
+              value: a1b2c3d4-e5f6-7890-abcd-ef1234567890
       responses:
         "200":
           description: ""
@@ -621,6 +771,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchStatusResponse'
+              examples:
+                Example1:
+                  value:
+                    batch_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                    status: PROCESSING
+                    total_count: 3
+                    completed_count: 1
+                    failed_count: 0
+                    pending_count: 2
+                    transcriptions:
+                      - id: d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32
+                        title: Shiur 1
+                        created_at: "2024-01-15T09:30:00Z"
+                        primary_language: en
+                        hebrew_word_format:
+                          - en
+                          - he
+                        num_speakers: 1
+                        status: COMPLETED
+                        duration: 1802.5
+                        model: v1
+                      - id: e6f0d95a-d3c3-5ca5-c5c1-8aad8b0aad43
+                        title: Shiur 2
+                        created_at: "2024-01-15T09:30:00Z"
+                        primary_language: en
+                        hebrew_word_format:
+                          - en
+                          - he
+                        num_speakers: 1
+                        status: PROCESSING
+                        model: v1
         "401":
           description: ""
         "404":
@@ -1108,6 +1289,96 @@ components:
           description: Optional message describing the outcome (e.g., not found).
       required:
         - success
+    OcrJobCreateRequest:
+      title: OcrJobCreateRequest
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional job id. Provide this when you pre-allocate a storage path using the job id.
+        storage_path:
+          type: string
+          description: Path to the uploaded file within the OCR storage bucket.
+        file_name:
+          type: string
+          nullable: true
+          description: Original file name.
+        content_type:
+          type: string
+          nullable: true
+          description: MIME type of the uploaded file (e.g., application/pdf, image/png).
+        file_kind:
+          type: string
+          nullable: true
+          description: Optional hint for file type (pdf or image).
+        model:
+          type: string
+          nullable: true
+          description: OCR mode to use. "normal" for standard documents, "enhanced" for difficult texts like Rashi script or low quality scans.
+      required:
+        - storage_path
+    OcrJobResponse:
+      title: OcrJobResponse
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: OCR job id.
+        file_name:
+          type: string
+          nullable: true
+          description: Original file name.
+      required:
+        - job_id
+    OcrPage:
+      title: OcrPage
+      type: object
+      properties:
+        page_num:
+          type: integer
+          description: 1-indexed page number.
+        content:
+          type: string
+          nullable: true
+          description: OCR output for the page (Markdown).
+      required:
+        - page_num
+    OcrJobStatus:
+      title: OcrJobStatus
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: OCR job id.
+        file_name:
+          type: string
+          nullable: true
+          description: Original file name.
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Job creation time.
+        num_pages:
+          type: integer
+          nullable: true
+          description: Total number of pages detected.
+        status:
+          type: string
+          description: Job status (PENDING, PROCESSING, COMPLETED).
+        pages:
+          type: array
+          items:
+            $ref: '#/components/schemas/OcrPage'
+          description: OCR output by page.
+      required:
+        - job_id
+        - status
+        - pages
     Confidence:
       title: Confidence
       type: string
@@ -1255,58 +1526,68 @@ components:
     BatchTranscriptionRequest:
       title: BatchTranscriptionRequest
       type: object
+      description: Request body for creating a batch transcription. Use either `batch_file_id` (standard mode) or `audio_sources` (express mode), not both.
       properties:
+        processing_mode:
+          $ref: '#/components/schemas/ProcessingMode'
+          nullable: true
+          description: |-
+            Choose how the batch is processed:
+            - `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`.
+            - `express`: Higher cost, starts immediately. Max 10 files. Use with `audio_sources`.
         batch_file_id:
           type: string
           format: uuid
           nullable: true
-          description: Batch file to process in standard mode. Required when processing_mode is "standard"; not allowed when processing_mode is "express".
+          description: |-
+            **For standard mode only.** ID of a previously uploaded batch manifest.
+
+            Get this by calling [Upload Batch File](/api-reference/transcribe/upload-batch-file) first.
         audio_sources:
           type: array
           items:
             $ref: '#/components/schemas/BatchAudioSource'
           nullable: true
-          description: List of audio sources to transcribe with the same settings. Only allowed when processing_mode is "express"; not allowed when processing_mode is "standard".
+          description: |-
+            **For express mode only.** List of audio URLs to transcribe (max 10).
+
+            Each item needs an `audio_url` and can optionally include a `title`.
         info:
           $ref: '#/components/schemas/TranscriptionRequestInfo'
-          description: Shared transcription parameters for all audio files in the batch
+          description: Transcription settings applied to all files in the batch (model, language, etc.)
         batch_title:
           type: string
           nullable: true
-          description: Optional title for the batch. The system will first check for a title in the Audio Source itself. If no title is provided there, it defaults to batch title providded here with "- Batch Item N" appended.
+          description: Default title prefix for transcriptions. Individual items can override this. Items without titles become "{batch_title} - Item 1", "{batch_title} - Item 2", etc.
         batch_id:
           type: string
           format: uuid
           nullable: true
-          description: Optional ID for the batch. If not provided, a UUID will be generated.
-        processing_mode:
-          $ref: '#/components/schemas/ProcessingMode'
-          nullable: true
-          description: |-
-            Processing speed and cost tier.
-            - standard: (Default) Processed within 24 hours. Lower cost. Requires batch_file_id and disallows inline audio_sources.
-            - express: Processed immediately. Higher cost. Limited to 10 files per batch. Requires inline audio_sources and disallows batch_file_id.
+          description: Custom UUID for this batch. Auto-generated if not provided.
       required:
         - info
     BatchTranscriptionResponse:
       title: BatchTranscriptionResponse
       type: object
+      description: Response after successfully creating a batch transcription.
       properties:
         batch_id:
           type: string
           format: uuid
-          description: Unique identifier for the batch
+          description: Use this ID to check batch progress via [Get Batch Status](/api-reference/transcribe/get-batch-status)
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
         transcription_ids:
           type: array
           items:
             $ref: '#/components/schemas/TranscriptionId'
-          description: List of transcription IDs that were created for this batch
+          description: IDs for each transcription in the batch. Use these to retrieve individual results via [Get Transcription](/api-reference/transcribe/get-transcription)
         total_count:
           type: integer
-          description: Total number of transcriptions in the batch
+          description: Number of transcriptions created
+          example: 2
         status:
           $ref: '#/components/schemas/BatchStatus'
-          description: Current status of the batch
+          description: Initial batch status (typically `RECEIVED`)
       required:
         - batch_id
         - transcription_ids
@@ -1315,31 +1596,37 @@ components:
     BatchStatusResponse:
       title: BatchStatusResponse
       type: object
+      description: Detailed progress of a batch transcription.
       properties:
         batch_id:
           type: string
           format: uuid
-          description: Unique identifier for the batch
+          description: ID of this batch
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
         status:
           $ref: '#/components/schemas/BatchStatus'
-          description: Current status of the batch
+          description: Overall batch status
         total_count:
           type: integer
-          description: Total number of transcriptions in the batch
+          description: Total transcriptions in batch
+          example: 3
         completed_count:
           type: integer
-          description: Number of transcriptions that have completed successfully
+          description: Successfully completed
+          example: 1
         failed_count:
           type: integer
-          description: Number of transcriptions that have failed
+          description: Failed transcriptions
+          example: 0
         pending_count:
           type: integer
-          description: Number of transcriptions still pending or processing
+          description: Still processing or queued
+          example: 2
         transcriptions:
           type: array
           items:
             $ref: '#/components/schemas/TranscriptionInfo'
-          description: List of transcription statuses in the batch
+          description: Status details for each transcription in the batch
       required:
         - batch_id
         - status
@@ -1356,18 +1643,21 @@ components:
         - PROCESSING
         - COMPLETED
         - FAILED
+      description: Overall status of a batch transcription job.
     ProcessingMode:
       title: ProcessingMode
       type: string
       enum:
         - standard
         - express
+      description: Determines cost and processing speed for batch transcriptions.
     BatchFileContentType:
       title: BatchFileContentType
       type: string
       enum:
         - json
         - jsonl
+      description: Format of the batch manifest payload.
     BatchFileStatus:
       title: BatchFileStatus
       type: string
@@ -1375,72 +1665,86 @@ components:
         - PENDING_VALIDATION
         - VALID
         - INVALID
+      description: Validation status of an uploaded batch manifest.
     BatchFileMetadata:
       title: BatchFileMetadata
       type: object
+      description: Optional metadata for organizing batch files.
       properties:
         title:
           type: string
           nullable: true
-          description: Optional title for this batch file manifest.
+          description: Name for this batch manifest
         description:
           type: string
           nullable: true
-          description: Optional description for this batch file manifest.
+          description: Notes or description
     BatchFileUploadRequest:
       title: BatchFileUploadRequest
       type: object
+      description: |-
+        Upload a manifest of audio URLs for standard mode batch processing.
+        Use either `json_items` (JSON array) or `jsonl` (newline-delimited), not both.
+        Maximum 500 audio sources per manifest.
       properties:
         content_type:
           $ref: '#/components/schemas/BatchFileContentType'
-          description: Format of the manifest payload. Use "json" for an array and "jsonl" for one JSON object per line separated by \n.
+          description: Format of your manifest data
         json_items:
           type: array
           items:
             $ref: '#/components/schemas/BatchAudioSource'
           nullable: true
-          description: When content_type is "json", provide the items as an array. Mutually exclusive with jsonl.
+          description: '**For JSON format.** Array of audio sources to transcribe (max 500).'
         jsonl:
           type: string
           nullable: true
-          description: When content_type is "jsonl", provide the raw JSON Lines payload. One JSON object per line separated by \n. Mutually exclusive with json_items.
+          description: |-
+            **For JSONL format.** One audio source per line as JSON, separated by newlines (max 500 lines).
+
+            Example: `{"audio_url": "https://..."}\n{"audio_url": "https://..."}`
         metadata:
           $ref: '#/components/schemas/BatchFileMetadata'
           nullable: true
-          description: Optional metadata to associate with the uploaded batch file.
+          description: Optional title and description for this manifest
       required:
         - content_type
     BatchFileUploadResponse:
       title: BatchFileUploadResponse
       type: object
+      description: Response after uploading a batch manifest.
       properties:
         batch_file_id:
           type: string
           format: uuid
-          description: Unique identifier for the uploaded batch file.
+          description: Use this ID when calling [Create Batch Transcription](/api-reference/transcribe/create-batch-transcription) with standard mode
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
         item_count:
           type: integer
-          description: Number of items detected in the manifest.
+          description: Number of audio sources in the manifest
+          example: 3
         size_bytes:
           type: integer
-          description: Size of the uploaded manifest in bytes.
+          description: Size of the manifest in bytes
+          example: 256
         checksum:
           type: string
           nullable: true
-          description: Optional checksum of the manifest payload.
+          description: SHA256 checksum of the manifest
         created_at:
           type: string
           format: date-time
-          description: When the manifest was uploaded.
+          description: Upload timestamp
+          example: "2024-01-15T09:30:00Z"
         status:
           $ref: '#/components/schemas/BatchFileStatus'
-          description: Current validation status of the manifest.
+          description: Validation status. Wait for `VALID` before starting a batch.
         validation_errors:
           type: array
           items:
             type: string
           nullable: true
-          description: Validation errors if the status is INVALID.
+          description: If status is `INVALID`, lists what's wrong with the manifest
       required:
         - batch_file_id
         - item_count
@@ -1450,32 +1754,33 @@ components:
     BatchFileSummary:
       title: BatchFileSummary
       type: object
+      description: Summary of an uploaded batch manifest.
       properties:
         id:
           type: string
           format: uuid
-          description: ID of the batch file.
+          description: Batch file ID
         created_at:
           type: string
           format: date-time
-          description: When the manifest was uploaded.
+          description: Upload timestamp
         item_count:
           type: integer
-          description: Number of items detected in the manifest.
+          description: Number of audio sources
         size_bytes:
           type: integer
-          description: Size of the uploaded manifest in bytes.
+          description: Manifest size in bytes
         status:
           $ref: '#/components/schemas/BatchFileStatus'
-          description: Current validation status of the manifest.
+          description: Validation status
         checksum:
           type: string
           nullable: true
-          description: Optional checksum of the manifest payload.
+          description: SHA256 checksum
         title:
           type: string
           nullable: true
-          description: Optional title from metadata.
+          description: Title from metadata
       required:
         - id
         - created_at
@@ -1485,42 +1790,43 @@ components:
     BatchFileDetail:
       title: BatchFileDetail
       type: object
+      description: Full details of an uploaded batch manifest.
       properties:
         id:
           type: string
           format: uuid
-          description: ID of the batch file.
+          description: Batch file ID
         created_at:
           type: string
           format: date-time
-          description: When the manifest was uploaded.
+          description: Upload timestamp
         item_count:
           type: integer
-          description: Number of items detected in the manifest.
+          description: Number of audio sources
         size_bytes:
           type: integer
-          description: Size of the uploaded manifest in bytes.
+          description: Manifest size in bytes
         status:
           $ref: '#/components/schemas/BatchFileStatus'
-          description: Current validation status of the manifest.
+          description: Validation status
         checksum:
           type: string
           nullable: true
-          description: Optional checksum of the manifest payload.
+          description: SHA256 checksum
         title:
           type: string
           nullable: true
-          description: Optional title from metadata.
+          description: Title from metadata
         description:
           type: string
           nullable: true
-          description: Optional description from metadata.
+          description: Description from metadata
         validation_errors:
           type: array
           items:
             type: string
           nullable: true
-          description: Validation errors if the status is INVALID.
+          description: If status is `INVALID`, lists what's wrong
       required:
         - id
         - created_at
@@ -1535,11 +1841,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BatchFileSummary'
-          description: Batch files visible to the authenticated user.
+          description: Your uploaded batch manifests
         next_cursor:
           type: string
           nullable: true
-          description: Cursor for pagination if more results are available.
+          description: Pagination cursor (if more results exist)
       required:
         - files
     Language:
@@ -1723,18 +2029,19 @@ components:
     BatchAudioSource:
       title: BatchAudioSource
       type: object
+      description: A single audio file in a batch manifest.
       properties:
         audio_url:
           type: string
-          description: URL to a downloadable audio file.
+          description: Direct download URL to the audio file (MP3, WAV, etc.)
         title:
           type: string
           nullable: true
-          description: An optional title for this specific audio file. If a title is not provided, the system will use the batch title followed by "Batch Item i+1". If neither a specific title nor a batch title is available, it will default to "Batch Item i+1". This ensures each audio file has a unique identifier within the batch.
+          description: Title for this transcription. Falls back to batch_title or auto-generated "Item 1", "Item 2", etc.
         id:
           $ref: '#/components/schemas/TranscriptionId'
           nullable: true
-          description: An optional UUID for this specific audio file. If an ID is not provided, the system will generate a UUID for the audio file.
+          description: Custom UUID for this transcription. Auto-generated if not provided.
       required:
         - audio_url
     TranscriptionSummary:
