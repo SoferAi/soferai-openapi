@@ -1051,6 +1051,14 @@ components:
           type: string
           nullable: true
           description: Hex color code for the category (e.g.,
+        description:
+          type: string
+          nullable: true
+          description: Optional description to help categorize transcripts.
+        auto_tag_enabled:
+          type: boolean
+          nullable: true
+          description: Whether to automatically tag transcripts that match this category.
       required:
         - name
     UpdateCategoryRequest:
@@ -1065,6 +1073,14 @@ components:
           type: string
           nullable: true
           description: New hex color code for the category (e.g.,
+        description:
+          type: string
+          nullable: true
+          description: New description for the category
+        auto_tag_enabled:
+          type: boolean
+          nullable: true
+          description: Whether to automatically tag transcripts that match this category
     AddTranscriptionToCategoryRequest:
       title: AddTranscriptionToCategoryRequest
       type: object
@@ -1093,6 +1109,14 @@ components:
         color_hex:
           type: string
           description: Hex color code for the category
+        description:
+          type: string
+          nullable: true
+          description: Optional description to help categorize transcripts
+        auto_tag_enabled:
+          type: boolean
+          nullable: true
+          description: Whether auto-tagging is enabled for this category
         created_at:
           type: string
           format: date-time
