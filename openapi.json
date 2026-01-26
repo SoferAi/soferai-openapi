@@ -883,7 +883,7 @@
     },
     "/v1/transcriptions/batch": {
       "post": {
-        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch File](/api-reference/transcribe/upload-batch-file), then pass the `batch_file_id` here.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.",
+        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request. Pricing for v1 is $1.20/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch File](/api-reference/transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.",
         "operationId": "transcribe_createBatchTranscription",
         "tags": [
           "Transcribe"
@@ -2252,7 +2252,7 @@
           "processing_mode": {
             "$ref": "#/components/schemas/ProcessingMode",
             "nullable": true,
-            "description": "Choose how the batch is processed:\n- `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`.\n- `express`: Higher cost, starts immediately. Max 10 files. Use with `audio_sources`."
+            "description": "Choose how the batch is processed:\n- `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`. Pricing for v1 batch standard is $0.90/hour.\n- `express`: Higher cost, starts immediately. Max 10 files. Use with `audio_sources`. Pricing for v1 is $1.20/hour."
           },
           "batch_file_id": {
             "type": "string",
