@@ -35,6 +35,384 @@
         ]
       }
     },
+    "/v1/transcriptions/batch": {
+      "post": {
+        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request. Pricing for v1 is $1.20/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.",
+        "operationId": "batchTranscribe_createBatchTranscription",
+        "tags": [
+          "BatchTranscribe"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns the batch ID and individual transcription IDs. Use [Get Batch Status](/api-reference/batch-transcribe/get-batch-status) to track progress.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchTranscriptionResponse"
+                },
+                "examples": {
+                  "express_mode": {
+                    "value": {
+                      "batch_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "transcription_ids": [
+                        "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
+                        "e6f0d95a-d3c3-5ca5-c5c1-8aad8b0aad43"
+                      ],
+                      "total_count": 2,
+                      "status": "RECEIVED"
+                    }
+                  },
+                  "standard_mode": {
+                    "value": {
+                      "batch_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                      "transcription_ids": [
+                        "c7d8e9f0-a1b2-3456-cdef-789012345678",
+                        "d8e9f0a1-b2c3-4567-def0-890123456789",
+                        "e9f0a1b2-c3d4-5678-ef01-901234567890"
+                      ],
+                      "total_count": 3,
+                      "status": "RECEIVED"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchTranscriptionRequest"
+              },
+              "examples": {
+                "express_mode": {
+                  "value": {
+                    "audio_sources": [
+                      {
+                        "audio_url": "https://example.com/audio1.mp3",
+                        "title": "Rabbi Cohen's Shiur on Shabbos"
+                      },
+                      {
+                        "audio_url": "https://example.com/audio2.mp3",
+                        "title": "Rabbi Cohen's Shiur on Kashrus"
+                      }
+                    ],
+                    "info": {
+                      "model": "v1",
+                      "primary_language": "en",
+                      "hebrew_word_format": [
+                        "en",
+                        "he"
+                      ],
+                      "num_speakers": 1
+                    },
+                    "batch_title": "Rabbi Cohen Shiurim",
+                    "processing_mode": "express"
+                  }
+                },
+                "standard_mode": {
+                  "value": {
+                    "batch_file_id": "f1234567-89ab-cdef-0123-456789abcdef",
+                    "info": {
+                      "model": "v1",
+                      "primary_language": "en",
+                      "hebrew_word_format": [
+                        "en",
+                        "he"
+                      ],
+                      "num_speakers": 1
+                    },
+                    "batch_title": "Weekly Shiurim Collection",
+                    "processing_mode": "standard"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/transcriptions/batch-files": {
+      "post": {
+        "description": "Upload a batch manifest containing audio URLs for standard mode batch processing.\n\n**Workflow:**\n1. Upload your manifest here to get a `batch_file_id`\n2. Use that ID in [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription) with `processing_mode: \"standard\"`\n\nThe manifest is a list of audio sources (max 500), each with a URL and optional title. You can provide it as a JSON array or JSONL format.",
+        "operationId": "batchTranscribe_uploadBatchFile",
+        "tags": [
+          "BatchTranscribe"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchFileUploadResponse"
+                },
+                "examples": {
+                  "json_format": {
+                    "value": {
+                      "batch_file_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "item_count": 3,
+                      "size_bytes": 256,
+                      "created_at": "2024-01-15T09:30:00Z",
+                      "status": "VALID"
+                    }
+                  },
+                  "jsonl_format": {
+                    "value": {
+                      "batch_file_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                      "item_count": 2,
+                      "size_bytes": 128,
+                      "created_at": "2024-01-15T09:30:00Z",
+                      "status": "VALID"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "summary": "Upload Batch Manifest File",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchFileUploadRequest"
+              },
+              "examples": {
+                "json_format": {
+                  "value": {
+                    "content_type": "json",
+                    "json_items": [
+                      {
+                        "audio_url": "https://example.com/shiur1.mp3",
+                        "title": "Parshas Bereishis - Rabbi Cohen"
+                      },
+                      {
+                        "audio_url": "https://example.com/shiur2.mp3",
+                        "title": "Parshas Noach - Rabbi Cohen"
+                      },
+                      {
+                        "audio_url": "https://example.com/shiur3.mp3",
+                        "title": "Parshas Lech Lecha - Rabbi Cohen"
+                      }
+                    ],
+                    "metadata": {
+                      "title": "Rabbi Cohen Weekly Parsha Series",
+                      "description": "Shiurim from Fall 2024"
+                    }
+                  }
+                },
+                "jsonl_format": {
+                  "value": {
+                    "content_type": "jsonl",
+                    "jsonl": "{\"audio_url\": \"https://example.com/shiur1.mp3\", \"title\": \"Shiur 1\"}\n{\"audio_url\": \"https://example.com/shiur2.mp3\", \"title\": \"Shiur 2\"}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "List all batch file manifests you've uploaded. Use this to find a `batch_file_id` for starting a standard mode batch.",
+        "operationId": "batchTranscribe_listBatchFiles",
+        "tags": [
+          "BatchTranscribe"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListBatchFilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/transcriptions/batch-files/{batch_file_id}": {
+      "get": {
+        "description": "Get details about a specific batch file manifest, including its validation status. Check this after uploading to ensure your manifest is valid before starting a batch.",
+        "operationId": "batchTranscribe_getBatchFile",
+        "tags": [
+          "BatchTranscribe"
+        ],
+        "parameters": [
+          {
+            "name": "batch_file_id",
+            "in": "path",
+            "description": "The batch file ID returned from [Upload Batch File](/api-reference/batch-transcribe/upload-batch-file)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchFileDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/transcriptions/batch/{batch_id}/status": {
+      "get": {
+        "description": "Check the progress of a batch transcription. Returns counts of completed, failed, and pending transcriptions, plus details for each individual transcription.",
+        "operationId": "batchTranscribe_getBatchStatus",
+        "tags": [
+          "BatchTranscribe"
+        ],
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "description": "The batch ID returned from [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "examples": {
+              "Example1": {
+                "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchStatusResponse"
+                },
+                "examples": {
+                  "Example1": {
+                    "value": {
+                      "batch_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "status": "PROCESSING",
+                      "total_count": 3,
+                      "completed_count": 1,
+                      "failed_count": 0,
+                      "pending_count": 2,
+                      "transcriptions": [
+                        {
+                          "id": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
+                          "title": "Shiur 1",
+                          "created_at": "2024-01-15T09:30:00Z",
+                          "primary_language": "en",
+                          "hebrew_word_format": [
+                            "en",
+                            "he"
+                          ],
+                          "num_speakers": 1,
+                          "status": "COMPLETED",
+                          "duration": 1802.5,
+                          "model": "v1"
+                        },
+                        {
+                          "id": "e6f0d95a-d3c3-5ca5-c5c1-8aad8b0aad43",
+                          "title": "Shiur 2",
+                          "created_at": "2024-01-15T09:30:00Z",
+                          "primary_language": "en",
+                          "hebrew_word_format": [
+                            "en",
+                            "he"
+                          ],
+                          "num_speakers": 1,
+                          "status": "PROCESSING",
+                          "model": "v1"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/categories/": {
       "post": {
         "description": "Create a new category",
@@ -868,383 +1246,6 @@
             }
           },
           "401": {
-            "description": ""
-          },
-          "429": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/transcriptions/batch": {
-      "post": {
-        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request. Pricing for v1 is $1.20/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch File](/api-reference/transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.",
-        "operationId": "transcribe_createBatchTranscription",
-        "tags": [
-          "Transcribe"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns the batch ID and individual transcription IDs. Use [Get Batch Status](/api-reference/transcribe/get-batch-status) to track progress.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchTranscriptionResponse"
-                },
-                "examples": {
-                  "express_mode": {
-                    "value": {
-                      "batch_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                      "transcription_ids": [
-                        "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
-                        "e6f0d95a-d3c3-5ca5-c5c1-8aad8b0aad43"
-                      ],
-                      "total_count": 2,
-                      "status": "RECEIVED"
-                    }
-                  },
-                  "standard_mode": {
-                    "value": {
-                      "batch_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-                      "transcription_ids": [
-                        "c7d8e9f0-a1b2-3456-cdef-789012345678",
-                        "d8e9f0a1-b2c3-4567-def0-890123456789",
-                        "e9f0a1b2-c3d4-5678-ef01-901234567890"
-                      ],
-                      "total_count": 3,
-                      "status": "RECEIVED"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": ""
-          },
-          "429": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchTranscriptionRequest"
-              },
-              "examples": {
-                "express_mode": {
-                  "value": {
-                    "audio_sources": [
-                      {
-                        "audio_url": "https://example.com/audio1.mp3",
-                        "title": "Rabbi Cohen's Shiur on Shabbos"
-                      },
-                      {
-                        "audio_url": "https://example.com/audio2.mp3",
-                        "title": "Rabbi Cohen's Shiur on Kashrus"
-                      }
-                    ],
-                    "info": {
-                      "model": "v1",
-                      "primary_language": "en",
-                      "hebrew_word_format": [
-                        "en",
-                        "he"
-                      ],
-                      "num_speakers": 1
-                    },
-                    "batch_title": "Rabbi Cohen Shiurim",
-                    "processing_mode": "express"
-                  }
-                },
-                "standard_mode": {
-                  "value": {
-                    "batch_file_id": "f1234567-89ab-cdef-0123-456789abcdef",
-                    "info": {
-                      "model": "v1",
-                      "primary_language": "en",
-                      "hebrew_word_format": [
-                        "en",
-                        "he"
-                      ],
-                      "num_speakers": 1
-                    },
-                    "batch_title": "Weekly Shiurim Collection",
-                    "processing_mode": "standard"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/transcriptions/batch-files": {
-      "post": {
-        "description": "Upload a batch manifest containing audio URLs for standard mode batch processing.\n\n**Workflow:**\n1. Upload your manifest here to get a `batch_file_id`\n2. Use that ID in [Create Batch Transcription](/api-reference/transcribe/create-batch-transcription) with `processing_mode: \"standard\"`\n\nThe manifest is a list of audio sources (max 500), each with a URL and optional title. You can provide it as a JSON array or JSONL format.",
-        "operationId": "transcribe_uploadBatchFile",
-        "tags": [
-          "Transcribe"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchFileUploadResponse"
-                },
-                "examples": {
-                  "json_format": {
-                    "value": {
-                      "batch_file_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                      "item_count": 3,
-                      "size_bytes": 256,
-                      "created_at": "2024-01-15T09:30:00Z",
-                      "status": "VALID"
-                    }
-                  },
-                  "jsonl_format": {
-                    "value": {
-                      "batch_file_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-                      "item_count": 2,
-                      "size_bytes": 128,
-                      "created_at": "2024-01-15T09:30:00Z",
-                      "status": "VALID"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": ""
-          },
-          "429": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchFileUploadRequest"
-              },
-              "examples": {
-                "json_format": {
-                  "value": {
-                    "content_type": "json",
-                    "json_items": [
-                      {
-                        "audio_url": "https://example.com/shiur1.mp3",
-                        "title": "Parshas Bereishis - Rabbi Cohen"
-                      },
-                      {
-                        "audio_url": "https://example.com/shiur2.mp3",
-                        "title": "Parshas Noach - Rabbi Cohen"
-                      },
-                      {
-                        "audio_url": "https://example.com/shiur3.mp3",
-                        "title": "Parshas Lech Lecha - Rabbi Cohen"
-                      }
-                    ],
-                    "metadata": {
-                      "title": "Rabbi Cohen Weekly Parsha Series",
-                      "description": "Shiurim from Fall 2024"
-                    }
-                  }
-                },
-                "jsonl_format": {
-                  "value": {
-                    "content_type": "jsonl",
-                    "jsonl": "{\"audio_url\": \"https://example.com/shiur1.mp3\", \"title\": \"Shiur 1\"}\n{\"audio_url\": \"https://example.com/shiur2.mp3\", \"title\": \"Shiur 2\"}"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "description": "List all batch file manifests you've uploaded. Use this to find a `batch_file_id` for starting a standard mode batch.",
-        "operationId": "transcribe_listBatchFiles",
-        "tags": [
-          "Transcribe"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListBatchFilesResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": ""
-          },
-          "429": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/transcriptions/batch-files/{batch_file_id}": {
-      "get": {
-        "description": "Get details about a specific batch file manifest, including its validation status. Check this after uploading to ensure your manifest is valid before starting a batch.",
-        "operationId": "transcribe_getBatchFile",
-        "tags": [
-          "Transcribe"
-        ],
-        "parameters": [
-          {
-            "name": "batch_file_id",
-            "in": "path",
-            "description": "The batch file ID returned from [Upload Batch File](/api-reference/transcribe/upload-batch-file)",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchFileDetail"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": ""
-          },
-          "404": {
-            "description": ""
-          },
-          "429": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/transcriptions/batch/{batch_id}/status": {
-      "get": {
-        "description": "Check the progress of a batch transcription. Returns counts of completed, failed, and pending transcriptions, plus details for each individual transcription.",
-        "operationId": "transcribe_getBatchStatus",
-        "tags": [
-          "Transcribe"
-        ],
-        "parameters": [
-          {
-            "name": "batch_id",
-            "in": "path",
-            "description": "The batch ID returned from [Create Batch Transcription](/api-reference/transcribe/create-batch-transcription)",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-            "examples": {
-              "Example1": {
-                "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchStatusResponse"
-                },
-                "examples": {
-                  "Example1": {
-                    "value": {
-                      "batch_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                      "status": "PROCESSING",
-                      "total_count": 3,
-                      "completed_count": 1,
-                      "failed_count": 0,
-                      "pending_count": 2,
-                      "transcriptions": [
-                        {
-                          "id": "d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32",
-                          "title": "Shiur 1",
-                          "created_at": "2024-01-15T09:30:00Z",
-                          "primary_language": "en",
-                          "hebrew_word_format": [
-                            "en",
-                            "he"
-                          ],
-                          "num_speakers": 1,
-                          "status": "COMPLETED",
-                          "duration": 1802.5,
-                          "model": "v1"
-                        },
-                        {
-                          "id": "e6f0d95a-d3c3-5ca5-c5c1-8aad8b0aad43",
-                          "title": "Shiur 2",
-                          "created_at": "2024-01-15T09:30:00Z",
-                          "primary_language": "en",
-                          "hebrew_word_format": [
-                            "en",
-                            "he"
-                          ],
-                          "num_speakers": 1,
-                          "status": "PROCESSING",
-                          "model": "v1"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": ""
-          },
-          "404": {
             "description": ""
           },
           "429": {
@@ -2258,7 +2259,7 @@
             "type": "string",
             "format": "uuid",
             "nullable": true,
-            "description": "**For standard mode only.** ID of a previously uploaded batch manifest.\n\nGet this by calling [Upload Batch File](/api-reference/transcribe/upload-batch-file) first."
+            "description": "**For standard mode only.** ID of a previously uploaded batch manifest.\n\nGet this by calling [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file) first."
           },
           "audio_sources": {
             "type": "array",
@@ -2296,7 +2297,7 @@
           "batch_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Use this ID to check batch progress via [Get Batch Status](/api-reference/transcribe/get-batch-status)",
+            "description": "Use this ID to check batch progress via [Get Batch Status](/api-reference/batch-transcribe/get-batch-status)",
             "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
           },
           "transcription_ids": {
@@ -2444,7 +2445,7 @@
           "json_items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/BatchAudioSource"
+              "$ref": "#/components/schemas/BatchManifestAudioSource"
             },
             "nullable": true,
             "description": "**For JSON format.** Array of audio sources to transcribe (max 500)."
@@ -2472,7 +2473,7 @@
           "batch_file_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Use this ID when calling [Create Batch Transcription](/api-reference/transcribe/create-batch-transcription) with standard mode",
+            "description": "Use this ID when calling [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription) with standard mode",
             "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
           },
           "item_count": {
@@ -2864,6 +2865,25 @@
             "$ref": "#/components/schemas/TranscriptionId",
             "nullable": true,
             "description": "Custom UUID for this transcription. Auto-generated if not provided."
+          }
+        },
+        "required": [
+          "audio_url"
+        ]
+      },
+      "BatchManifestAudioSource": {
+        "title": "BatchManifestAudioSource",
+        "type": "object",
+        "description": "A single audio file in a batch manifest upload.",
+        "properties": {
+          "audio_url": {
+            "type": "string",
+            "description": "Direct download URL to the audio file (MP3, WAV, etc.)"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Title for this transcription. Falls back to batch_title or auto-generated \"Item 1\", \"Item 2\", etc."
           }
         },
         "required": [
