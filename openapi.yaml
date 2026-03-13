@@ -1584,11 +1584,6 @@ components:
           type: string
           nullable: true
           description: Default title prefix for transcriptions. Individual items can override this. Items without titles become "{batch_title} - Item 1", "{batch_title} - Item 2", etc.
-        batch_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: Custom UUID for this batch. Auto-generated if not provided.
       required:
         - info
     BatchTranscriptionResponse:
