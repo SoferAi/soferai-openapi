@@ -1895,37 +1895,6 @@
           "url"
         ]
       },
-      "AudioChunk": {
-        "title": "AudioChunk",
-        "type": "object",
-        "description": "Binary chunk of PCM audio streamed from the client.",
-        "properties": {
-          "data": {
-            "type": "string",
-            "description": "PCM audio data chunk"
-          },
-          "mime_type": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "data",
-          "mime_type"
-        ]
-      },
-      "TranscriptChunk": {
-        "title": "TranscriptChunk",
-        "type": "object",
-        "description": "Partial (or final) transcript text streamed from server.",
-        "properties": {
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "text"
-        ]
-      },
       "AddKnowledgeBaseDocumentRequest": {
         "title": "AddKnowledgeBaseDocumentRequest",
         "type": "object",
