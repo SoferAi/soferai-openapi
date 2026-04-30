@@ -33,6 +33,8 @@ paths:
         - **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.
 
         All files in the batch share the same transcription settings (model, language, etc.) defined in `info`.
+
+        If you include a `client_item_id` on each item, it must be unique within the batch. You can later resolve a `client_item_id` back to the canonical transcription ID with [Get Batch Transcription By Client Item ID](/api-reference/batch-transcribe/get-batch-transcription-by-client-item-id).
       operationId: batchTranscribe_createBatchTranscription
       tags:
         - BatchTranscribe
@@ -80,8 +82,10 @@ paths:
                   audio_sources:
                     - audio_url: https://example.com/audio1.mp3
                       title: Rabbi Cohen's Shiur on Shabbos
+                      client_item_id: shiur_shabbos
                     - audio_url: https://example.com/audio2.mp3
                       title: Rabbi Cohen's Shiur on Kashrus
+                      client_item_id: shiur_kashrus
                   info:
                     model: v1
                     primary_language: en
@@ -112,7 +116,7 @@ paths:
         1. Upload your manifest here to get a `batch_file_id`
         2. Use that ID in [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription) with `processing_mode: "standard"`
 
-        The manifest is a list of audio sources (max 500), each with a URL and optional title. You can provide it as a JSON array or JSONL format. If you need higher limits, contact support@sofer.ai.
+        The manifest is a list of audio sources (max 500), each with a URL and optional title or `client_item_id`. If you provide `client_item_id`, it must be unique within the manifest. You can provide it as a JSON array or JSONL format. If you need higher limits, contact support@sofer.ai.
       operationId: batchTranscribe_uploadBatchFile
       tags:
         - BatchTranscribe
@@ -159,10 +163,13 @@ paths:
                   json_items:
                     - audio_url: https://example.com/shiur1.mp3
                       title: Parshas Bereishis - Rabbi Cohen
+                      client_item_id: bereishis
                     - audio_url: https://example.com/shiur2.mp3
                       title: Parshas Noach - Rabbi Cohen
+                      client_item_id: noach
                     - audio_url: https://example.com/shiur3.mp3
                       title: Parshas Lech Lecha - Rabbi Cohen
+                      client_item_id: lech_lecha
                   metadata:
                     title: Rabbi Cohen Weekly Parsha Series
                     description: Shiurim from Fall 2024
@@ -170,8 +177,8 @@ paths:
                 value:
                   content_type: jsonl
                   jsonl: |-
-                    {"audio_url": "https://example.com/shiur1.mp3", "title": "Shiur 1"}
-                    {"audio_url": "https://example.com/shiur2.mp3", "title": "Shiur 2"}
+                    {"audio_url": "https://example.com/shiur1.mp3", "title": "Shiur 1", "client_item_id": "shiur_1"}
+                    {"audio_url": "https://example.com/shiur2.mp3", "title": "Shiur 2", "client_item_id": "shiur_2"}
     get:
       description: List all batch file manifests you've uploaded. Use this to find a `batch_file_id` for starting a standard mode batch.
       operationId: batchTranscribe_listBatchFiles
@@ -222,7 +229,10 @@ paths:
         - BearerAuth: []
   /v1/transcriptions/batch/{batch_id}/status:
     get:
-      description: Check the progress of a batch transcription. Returns counts of completed, failed, and pending transcriptions, plus details for each individual transcription.
+      description: |-
+        Check the progress of a batch transcription. Returns counts of completed, failed, and pending transcriptions, plus details for each individual transcription.
+
+        If a batch item was submitted with `client_item_id`, that value is echoed back in each transcription entry.
       operationId: batchTranscribe_getBatchStatus
       tags:
         - BatchTranscribe
@@ -256,6 +266,7 @@ paths:
                     pending_count: 2
                     transcriptions:
                       - id: d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32
+                        client_item_id: shiur_1
                         title: Shiur 1
                         created_at: "2024-01-15T09:30:00Z"
                         primary_language: en
@@ -267,6 +278,7 @@ paths:
                         duration: 1802.5
                         model: v1
                       - id: e6f0d95a-d3c3-5ca5-c5c1-8aad8b0aad43
+                        client_item_id: shiur_2
                         title: Shiur 2
                         created_at: "2024-01-15T09:30:00Z"
                         primary_language: en
@@ -282,6 +294,70 @@ paths:
           description: ""
         "429":
           description: ""
+      security:
+        - BearerAuth: []
+  /v1/transcriptions/batch/{batch_id}/items/by-client-item-id:
+    get:
+      description: |-
+        Resolve a batch item's `client_item_id` to the resulting transcription.
+
+        `client_item_id` values are unique only within a batch, so this lookup is scoped by `batch_id`.
+
+        The response is a standard [TranscriptionInfo](/api-reference/transcribe/get-transcription-status) object. Its `id` field is the canonical transcription ID for the batch item.
+      operationId: batchTranscribe_getBatchTranscriptionByClientItemId
+      tags:
+        - BatchTranscribe
+      parameters:
+        - name: batch_id
+          in: path
+          description: The batch ID returned from [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription)
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          examples:
+            Example1:
+              value: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        - name: client_item_id
+          in: query
+          description: The caller-defined client_item_id to resolve within this batch.
+          required: true
+          schema:
+            type: string
+          example: shiur_1
+          examples:
+            Example1:
+              value: shiur_1
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionInfo'
+              examples:
+                Example1:
+                  value:
+                    id: d5e9c84f-c2b2-4bf4-b4b0-7ffd7a9ffc32
+                    client_item_id: shiur_1
+                    title: Shiur 1
+                    created_at: "2024-01-15T09:30:00Z"
+                    primary_language: en
+                    hebrew_word_format:
+                      - en
+                      - he
+                    num_speakers: 1
+                    status: COMPLETED
+                    duration: 1802.5
+                    model: v1
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      summary: Get Batch Transcription By Client Item ID
       security:
         - BearerAuth: []
   /v1/categories/:
@@ -1554,9 +1630,11 @@ components:
           description: |-
             **For express mode only.** List of audio URLs to transcribe (max 10).
 
-            Each item needs an `audio_url` and can optionally include a `title`, `num_speakers`, or `auto_detect_speakers`.
+            Each item needs an `audio_url` and can optionally include a `title`, `client_item_id`, `num_speakers`, or `auto_detect_speakers`.
+
+            If you provide `client_item_id`, it must be unique within the batch and can be used later to look up the resulting transcription.
         info:
-          $ref: '#/components/schemas/TranscriptionRequestInfo'
+          $ref: '#/components/schemas/BatchTranscriptionRequestInfo'
           description: Transcription settings applied to all files in the batch (model, language, etc.)
         batch_title:
           type: string
@@ -1683,7 +1761,7 @@ components:
       description: |-
         Upload a manifest of audio URLs for standard mode batch processing.
         Use either `json_items` (JSON array) or `jsonl` (newline-delimited), not both.
-        Maximum 500 audio sources per manifest. If you need higher limits, contact support@sofer.ai.
+        Maximum 500 audio sources per manifest. Each item can optionally include a `client_item_id`, which must be unique within the manifest. If you need higher limits, contact support@sofer.ai.
       properties:
         content_type:
           $ref: '#/components/schemas/BatchFileContentType'
@@ -1926,6 +2004,51 @@ components:
           type: boolean
           nullable: true
           description: Automatically detect the number of speakers in the audio. This field is mutually exclusive with `num_speakers`. If both are provided, the API returns a 400 error.
+    BatchTranscriptionRequestInfo:
+      title: BatchTranscriptionRequestInfo
+      type: object
+      properties:
+        model:
+          type: string
+          nullable: true
+          description: |-
+            Model to be used for the transcription. Default is "v1".
+            - v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.
+            Priced at 1.20 USD per hour of audio transcribed.
+            - v0: Not generally recommended. Cheaper, but less accurate.
+            Priced at 1.00 USD per hour.
+        title:
+          type: string
+          nullable: true
+          description: Title for the transcription, Default is "Untitled"
+        primary_language:
+          $ref: '#/components/schemas/Language'
+          nullable: true
+          description: |-
+            Specifies the primary language spoken in the audio content. Default is English.
+            - en: English
+            - he: Hebrew
+            - yi: Yiddish
+        hebrew_word_format:
+          type: array
+          items:
+            $ref: '#/components/schemas/LettersLanguage'
+          nullable: true
+          description: |-
+            Relevant only if the primary language is English. This setting determines how non-English word, are formatted in the transcription.
+            - To include Hebrew words in their original Hebrew letters, specify "he".
+            - To transliterate Hebrew words into English letters, specify "en".
+            - If both "he" and "en" are specified, each Hebrew word will be provided in both formats, with the transliteration in <i> tags.
+            - If the primary language is English, the default is to include both English transliteration and original Hebrew letters ("en" and "he").
+            - If the primary language is not English, the default and only option is to include Hebrew words in their original Hebrew letters ("he").
+        num_speakers:
+          type: integer
+          nullable: true
+          description: Expected number of speakers in the audio. Default is 1. This field is mutually exclusive with `auto_detect_speakers`. If a number more than 1 is passed, it will be used for speaker labeling (a pro feature).
+        auto_detect_speakers:
+          type: boolean
+          nullable: true
+          description: Automatically detect the number of speakers in the audio. This field is mutually exclusive with `num_speakers`. If both are provided, the API returns a 400 error.
     TranscriptionInfo:
       title: TranscriptionInfo
       type: object
@@ -1933,10 +2056,14 @@ components:
         id:
           $ref: '#/components/schemas/TranscriptionId'
           description: ID of the transcription
+        client_item_id:
+          type: string
+          nullable: true
+          description: Caller-defined per-item identifier for batch items. This is `null` for single transcriptions and for batch items submitted without a `client_item_id`.
         title:
           type: string
           description: Title of the transcription
-          example: My Shiur Transcription
+          example: Shiur 1
         created_at:
           type: string
           format: date-time
@@ -2039,10 +2166,10 @@ components:
           type: string
           nullable: true
           description: Title for this transcription. Falls back to batch_title or auto-generated "Item 1", "Item 2", etc.
-        id:
-          $ref: '#/components/schemas/TranscriptionId'
+        client_item_id:
+          type: string
           nullable: true
-          description: Custom UUID for this transcription. Auto-generated if not provided.
+          description: Caller-defined identifier for this batch item. Must be unique within the batch. Use this to map the item back to the resulting transcription later.
         num_speakers:
           type: integer
           nullable: true
@@ -2065,6 +2192,10 @@ components:
           type: string
           nullable: true
           description: Title for this transcription. Falls back to batch_title or auto-generated "Item 1", "Item 2", etc.
+        client_item_id:
+          type: string
+          nullable: true
+          description: Caller-defined identifier for this batch item. Must be unique within the manifest. Use this to map the item back to the resulting transcription later.
         num_speakers:
           type: integer
           nullable: true
