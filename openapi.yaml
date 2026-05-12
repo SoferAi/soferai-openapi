@@ -610,6 +610,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
       summary: Get health status
+  /v1/internal/transcriptions/{transcription_id}/auto-title:
+    post:
+      description: Auto-generate and persist a title for a transcription.
+      operationId: internal_autoGenerateTitle
+      tags:
+        - Internal
+      parameters:
+        - name: transcription_id
+          in: path
+          description: ID of the transcription to title
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoGenerateTitleResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutoGenerateTitleRequest'
   /v1/link/extract:
     post:
       operationId: link_extract
@@ -1290,6 +1317,54 @@ components:
           description: Health status
       required:
         - status
+    AutoGenerateTitleRequest:
+      title: AutoGenerateTitleRequest
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/TitleUpdateMode'
+          nullable: true
+          description: Whether to replace the current title or append the generated title to it.
+        separator:
+          type: string
+          nullable: true
+          description: Separator used between the existing title and generated title when mode is append.
+    TitleUpdateMode:
+      title: TitleUpdateMode
+      type: string
+      enum:
+        - overwrite
+        - append
+    AutoGenerateTitleResponse:
+      title: AutoGenerateTitleResponse
+      type: object
+      properties:
+        transcription_id:
+          type: string
+          format: uuid
+          description: ID of the updated transcription.
+        mode:
+          $ref: '#/components/schemas/TitleUpdateMode'
+          description: How the generated title was applied.
+        previous_title:
+          type: string
+          nullable: true
+          description: Title before generation.
+        generated_title:
+          type: string
+          description: Title generated from the transcript text.
+        title:
+          type: string
+          description: Final title saved to the transcription.
+        model:
+          type: string
+          description: Gemini model used to generate the title.
+      required:
+        - transcription_id
+        - mode
+        - generated_title
+        - title
+        - model
     LinkRequest:
       title: LinkRequest
       type: object
