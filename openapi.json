@@ -2814,7 +2814,8 @@
         "enum": [
           "en",
           "he",
-          "yi"
+          "yi",
+          "fr"
         ]
       },
       "LettersLanguage": {
@@ -2868,7 +2869,7 @@
           "primary_language": {
             "$ref": "#/components/schemas/Language",
             "nullable": true,
-            "description": "Specifies the primary language spoken in the audio content. Default is English.\n- en: English\n- he: Hebrew\n- yi: Yiddish"
+            "description": "Specifies the primary language spoken in the audio content. Default is English.\n- en: English\n- he: Hebrew\n- yi: Yiddish\n- fr: French"
           },
           "hebrew_word_format": {
             "type": "array",
@@ -2907,7 +2908,7 @@
           "primary_language": {
             "$ref": "#/components/schemas/Language",
             "nullable": true,
-            "description": "Specifies the primary language spoken in the audio content. Default is English.\n- en: English\n- he: Hebrew\n- yi: Yiddish"
+            "description": "Specifies the primary language spoken in the audio content. Default is English.\n- en: English\n- he: Hebrew\n- yi: Yiddish\n- fr: French"
           },
           "hebrew_word_format": {
             "type": "array",
@@ -2955,7 +2956,7 @@
           },
           "primary_language": {
             "$ref": "#/components/schemas/Language",
-            "description": "The primary language of the audio content, which can be English (en), Hebrew (he), or Yiddish (yi)."
+            "description": "The primary language of the audio content, which can be English (en), Hebrew (he), Yiddish (yi), or French (fr)."
           },
           "hebrew_word_format": {
             "type": "array",
@@ -3000,7 +3001,7 @@
         "properties": {
           "text": {
             "type": "string",
-            "description": "This field contains the transcription text. If the `primary_language` is English and only one `hebrew_word_format` is specified, the text will be in English with Hebrew words in the specified format. If multiple `hebrew_word_format` options are set, Hebrew words will appear in both formats, with the English transliteration in <i>Italics</i>. If the primary language is Hebrew, the text will be in Hebrew.",
+            "description": "This field contains the transcription text. If the `primary_language` is English and only one `hebrew_word_format` is specified, the text will be in English with Hebrew words in the specified format. If multiple `hebrew_word_format` options are set, Hebrew words will appear in both formats, with the English transliteration in <i>Italics</i>. If the primary language is Hebrew, the text will be in Hebrew. If the primary language is French, the text will be in French, with Hebrew, Yiddish, and Aramaic words in Hebrew letters.",
             "example": "Welcome to today's <i>shiur</i> שיעור. We will discuss the <i>halacha</i> הלכה regarding..."
           },
           "timestamps": {
