@@ -37,7 +37,7 @@
     },
     "/v1/transcriptions/batch": {
       "post": {
-        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request. Pricing for v1 is $1.20/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.\n\nIf you include a `client_item_id` on each item, it must be unique within the batch. You can later resolve a `client_item_id` back to the canonical transcription ID with [Get Batch Transcription By Client Item ID](/api-reference/batch-transcribe/get-batch-transcription-by-client-item-id).",
+        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request. Pricing for v1 is $1.20/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.\n\nSpeaker settings can be provided at the batch level or per item. Per-item `num_speakers` or `auto_detect_speakers` settings take precedence over the batch-level speaker settings in `info`. If an item omits both speaker fields, it inherits the batch-level setting. If neither level provides a speaker setting, the transcription defaults to one speaker. Do not provide both `num_speakers` and `auto_detect_speakers` in the same object.\n\nIf you include a `client_item_id` on each item, it must be unique within the batch. You can later resolve a `client_item_id` back to the canonical transcription ID with [Get Batch Transcription By Client Item ID](/api-reference/batch-transcribe/get-batch-transcription-by-client-item-id).",
         "operationId": "batchTranscribe_createBatchTranscription",
         "tags": [
           "BatchTranscribe"
@@ -275,6 +275,78 @@
             "BearerAuth": []
           }
         ]
+      }
+    },
+    "/v1/transcriptions/batch-files/from-rss": {
+      "post": {
+        "description": "Create a standard-mode batch manifest from a podcast RSS feed.\n\nThe feed is fetched and parsed for podcast episode audio enclosures. Each episode with an audio enclosure becomes one manifest item with `audio_url`, title, and a stable `client_item_id`. The returned `batch_file_id` can be used in [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription) with `processing_mode: \"standard\"`.\n\nBy default, this imports up to the standard batch manifest limit. Use `limit` to import fewer episodes. If the feed has more episodes than one manifest can hold, call this endpoint again with the previous response's `next_offset`.\n\nNeed to find the RSS URL for a podcast? Try the [RSS.com Podcast RSS Feed Finder](https://rss.com/tools/find-my-feed/) and use the feed URL it returns.",
+        "operationId": "batchTranscribe_createBatchFileFromRss",
+        "tags": [
+          "BatchTranscribe"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchFileCreateFromRssResponse"
+                },
+                "examples": {
+                  "podcast_rss": {
+                    "value": {
+                      "batch_file_id": "c3d4e5f6-a789-4012-bcde-f12345678901",
+                      "item_count": 100,
+                      "size_bytes": 8192,
+                      "created_at": "2024-01-15T09:30:00Z",
+                      "status": "VALID",
+                      "offset": 0,
+                      "limit": 100,
+                      "has_more": true,
+                      "next_offset": 100
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "summary": "Create Batch Manifest From RSS",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchFileCreateFromRssRequest"
+              },
+              "examples": {
+                "podcast_rss": {
+                  "value": {
+                    "rss_url": "https://example.com/podcast/feed.xml",
+                    "limit": 100,
+                    "offset": 0,
+                    "metadata": {
+                      "title": "Weekly Parsha Podcast",
+                      "description": "Imported from RSS"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/transcriptions/batch-files/{batch_file_id}": {
@@ -2418,7 +2490,7 @@
       "BatchTranscriptionRequest": {
         "title": "BatchTranscriptionRequest",
         "type": "object",
-        "description": "Request body for creating a batch transcription. Use either `batch_file_id` (standard mode) or `audio_sources` (express mode), not both.",
+        "description": "Request body for creating a batch transcription. Use either `batch_file_id` (standard mode) or `audio_sources` (express mode), not both.\n\nSpeaker settings can be provided at the batch level in `info` or per item in `audio_sources` / a batch manifest. Per-item `num_speakers` or `auto_detect_speakers` settings take precedence over the batch-level speaker settings. If an item omits both speaker fields, it inherits the batch-level setting. If neither level provides a speaker setting, the transcription defaults to one speaker.",
         "properties": {
           "processing_mode": {
             "$ref": "#/components/schemas/ProcessingMode",
@@ -2437,11 +2509,11 @@
               "$ref": "#/components/schemas/BatchAudioSource"
             },
             "nullable": true,
-            "description": "**For express mode only.** List of audio URLs to transcribe (max 10).\n\nEach item needs an `audio_url` and can optionally include a `title`, `client_item_id`, `num_speakers`, or `auto_detect_speakers`.\n\nIf you provide `client_item_id`, it must be unique within the batch and can be used later to look up the resulting transcription."
+            "description": "**For express mode only.** List of audio URLs to transcribe (max 10).\n\nEach item needs an `audio_url` and can optionally include a `title`, `client_item_id`, `num_speakers`, or `auto_detect_speakers`.\n\nPer-item `num_speakers` or `auto_detect_speakers` settings take precedence over the batch-level speaker settings in `info`.\n\nIf you provide `client_item_id`, it must be unique within the batch and can be used later to look up the resulting transcription."
           },
           "info": {
             "$ref": "#/components/schemas/BatchTranscriptionRequestInfo",
-            "description": "Transcription settings applied to all files in the batch (model, language, etc.)"
+            "description": "Transcription settings applied to all files in the batch (model, language, etc.).\n\nBatch-level speaker settings are defaults. Per-item `num_speakers` or `auto_detect_speakers` settings in `audio_sources` or a batch manifest take precedence for that item."
           },
           "batch_title": {
             "type": "string",
@@ -2627,6 +2699,112 @@
         },
         "required": [
           "content_type"
+        ]
+      },
+      "BatchFileCreateFromRssRequest": {
+        "title": "BatchFileCreateFromRssRequest",
+        "type": "object",
+        "description": "Create a batch manifest by importing audio enclosures from a podcast RSS feed.",
+        "properties": {
+          "rss_url": {
+            "type": "string",
+            "description": "Public RSS feed URL to fetch and parse for podcast episode audio enclosures.",
+            "example": "https://example.com/podcast/feed.xml"
+          },
+          "limit": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Optional maximum number of episodes to import. Defaults to the standard batch manifest limit."
+          },
+          "offset": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of podcast episode audio enclosures to skip before importing. Use `next_offset` from the previous response to fetch the next page."
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/BatchFileMetadata",
+            "nullable": true,
+            "description": "Optional title and description for this manifest. If omitted, the podcast title from the feed is used when available."
+          }
+        },
+        "required": [
+          "rss_url"
+        ]
+      },
+      "BatchFileCreateFromRssResponse": {
+        "title": "BatchFileCreateFromRssResponse",
+        "type": "object",
+        "description": "Response after creating a batch manifest from a podcast RSS feed.",
+        "properties": {
+          "batch_file_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Use this ID when calling [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription) with standard mode",
+            "example": "c3d4e5f6-a789-4012-bcde-f12345678901"
+          },
+          "item_count": {
+            "type": "integer",
+            "description": "Number of audio sources imported into this manifest",
+            "example": 100
+          },
+          "size_bytes": {
+            "type": "integer",
+            "description": "Size of the manifest in bytes",
+            "example": 8192
+          },
+          "checksum": {
+            "type": "string",
+            "nullable": true,
+            "description": "SHA256 checksum of the manifest"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Upload timestamp",
+            "example": "2024-01-15T09:30:00Z"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BatchFileStatus",
+            "description": "Validation status. Wait for `VALID` before starting a batch."
+          },
+          "validation_errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "If status is `INVALID`, lists what's wrong with the manifest"
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of audio enclosures skipped before this import started",
+            "example": 0
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of audio enclosures requested for this import",
+            "example": 100
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether the feed contains more audio enclosures after this page",
+            "example": true
+          },
+          "next_offset": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Offset to pass to import the next page. Omitted when `has_more` is false."
+          }
+        },
+        "required": [
+          "batch_file_id",
+          "item_count",
+          "size_bytes",
+          "created_at",
+          "status",
+          "offset",
+          "limit",
+          "has_more"
         ]
       },
       "BatchFileUploadResponse": {
@@ -3063,7 +3241,7 @@
       "BatchAudioSource": {
         "title": "BatchAudioSource",
         "type": "object",
-        "description": "A single audio file in a batch manifest.",
+        "description": "A single audio file in a batch request.\n\nPer-item speaker settings take precedence over the batch-level speaker settings in `info`.",
         "properties": {
           "audio_url": {
             "type": "string",
@@ -3082,12 +3260,12 @@
           "num_speakers": {
             "type": "integer",
             "nullable": true,
-            "description": "Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`."
+            "description": "Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`. If provided, this overrides the batch-level speaker setting for this item."
           },
           "auto_detect_speakers": {
             "type": "boolean",
             "nullable": true,
-            "description": "Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`."
+            "description": "Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`. If provided, this overrides the batch-level speaker setting for this item."
           }
         },
         "required": [
@@ -3097,7 +3275,7 @@
       "BatchManifestAudioSource": {
         "title": "BatchManifestAudioSource",
         "type": "object",
-        "description": "A single audio file in a batch manifest upload.",
+        "description": "A single audio file in a batch manifest upload.\n\nPer-item speaker settings take precedence over the batch-level speaker settings provided when creating the batch transcription.",
         "properties": {
           "audio_url": {
             "type": "string",
@@ -3116,12 +3294,12 @@
           "num_speakers": {
             "type": "integer",
             "nullable": true,
-            "description": "Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`."
+            "description": "Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`. If provided, this overrides the batch-level speaker setting for this item."
           },
           "auto_detect_speakers": {
             "type": "boolean",
             "nullable": true,
-            "description": "Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`."
+            "description": "Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`. If provided, this overrides the batch-level speaker setting for this item."
           }
         },
         "required": [
