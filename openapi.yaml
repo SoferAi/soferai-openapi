@@ -2225,11 +2225,11 @@ components:
         num_speakers:
           type: integer
           nullable: true
-          description: Expected number of speakers in the audio. Default is 1. This field is mutually exclusive with `auto_detect_speakers`. If a number more than 1 is passed, it will be used for speaker labeling (a pro feature).
+          description: Expected number of speakers in the audio. Default is 1. This field is mutually exclusive with `auto_detect_speakers`. If a number more than 1 is passed, it will be used for speaker labeling and adds **$0.30/hour**.
         auto_detect_speakers:
           type: boolean
           nullable: true
-          description: Automatically detect the number of speakers in the audio. This field is mutually exclusive with `num_speakers`. If both are provided, the API returns a 400 error.
+          description: Automatically detect the number of speakers in the audio. This field is mutually exclusive with `num_speakers`. If both are provided, the API returns a 400 error. Auto-detection adds **$0.30/hour**.
     BatchTranscriptionRequestInfo:
       title: BatchTranscriptionRequestInfo
       type: object
@@ -2271,11 +2271,11 @@ components:
         num_speakers:
           type: integer
           nullable: true
-          description: Expected number of speakers in the audio. Default is 1. This field is mutually exclusive with `auto_detect_speakers`. If a number more than 1 is passed, it will be used for speaker labeling (a pro feature).
+          description: Expected number of speakers in the audio. Default is 1. This field is mutually exclusive with `auto_detect_speakers`. If a number more than 1 is passed, it will be used for speaker labeling and adds **$0.30/hour**.
         auto_detect_speakers:
           type: boolean
           nullable: true
-          description: Automatically detect the number of speakers in the audio. This field is mutually exclusive with `num_speakers`. If both are provided, the API returns a 400 error.
+          description: Automatically detect the number of speakers in the audio. This field is mutually exclusive with `num_speakers`. If both are provided, the API returns a 400 error. Auto-detection adds **$0.30/hour**.
     TranscriptionInfo:
       title: TranscriptionInfo
       type: object
@@ -2403,11 +2403,11 @@ components:
         num_speakers:
           type: integer
           nullable: true
-          description: Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`. If provided, this overrides the batch-level speaker setting for this item.
+          description: Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`. If provided, this overrides the batch-level speaker setting for this item. Values greater than 1 add **$0.30/hour**.
         auto_detect_speakers:
           type: boolean
           nullable: true
-          description: Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`. If provided, this overrides the batch-level speaker setting for this item.
+          description: Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`. If provided, this overrides the batch-level speaker setting for this item. Auto-detection adds **$0.30/hour**.
       required:
         - audio_url
     BatchManifestAudioSource:
@@ -2432,11 +2432,11 @@ components:
         num_speakers:
           type: integer
           nullable: true
-          description: Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`. If provided, this overrides the batch-level speaker setting for this item.
+          description: Expected number of speakers for this specific file. Mutually exclusive with `auto_detect_speakers`. If provided, this overrides the batch-level speaker setting for this item. Values greater than 1 add **$0.30/hour**.
         auto_detect_speakers:
           type: boolean
           nullable: true
-          description: Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`. If provided, this overrides the batch-level speaker setting for this item.
+          description: Automatically detect the number of speakers for this specific file. Mutually exclusive with `num_speakers`. If provided, this overrides the batch-level speaker setting for this item. Auto-detection adds **$0.30/hour**.
       required:
         - audio_url
     TranscriptionSummary:
