@@ -860,6 +860,79 @@ paths:
           description: ""
       security:
         - BearerAuth: []
+  /v1/ocr/jobs/{job_id}/translations:
+    post:
+      description: Start or refresh a whole-document OCR translation.
+      operationId: ocr_createOcrTranslation
+      tags:
+        - Ocr
+      parameters:
+        - name: job_id
+          in: path
+          description: OCR job id.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrTranslationStatus'
+        "401":
+          description: ""
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OcrTranslationRequest'
+  /v1/ocr/jobs/{job_id}/translations/{target_mode}:
+    get:
+      description: Get OCR translation status and translated text for each page.
+      operationId: ocr_getOcrTranslation
+      tags:
+        - Ocr
+      parameters:
+        - name: job_id
+          in: path
+          description: OCR job id.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: target_mode
+          in: path
+          description: Translation target mode (auto, en, or he).
+          required: true
+          schema:
+            type: string
+        - name: translation_style
+          in: query
+          description: Translation style id. Built-ins include learning_english and sefer_hebrew; saved user guides use custom:<style_id>.
+          required: false
+          schema:
+            type: string
+            nullable: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrTranslationStatus'
+        "401":
+          description: ""
+        "404":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/timestamps/outline:
     post:
       description: |-
@@ -1078,6 +1151,83 @@ paths:
                       status: COMPLETED
                       duration: 1802.5
                       model: v1
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+  /v1/transcriptions/{transcription_id}/translations:
+    post:
+      description: Start a background paragraph-level translation for a completed transcription
+      operationId: transcribe_createTranscriptionTranslation
+      tags:
+        - Transcribe
+      parameters:
+        - name: transcription_id
+          in: path
+          description: ID of the transcription to translate.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionTranslationStatus'
+        "401":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranscriptionTranslationRequest'
+  /v1/transcriptions/{transcription_id}/translations/{target_mode}:
+    get:
+      description: Get paragraph-level translation status and translated segments for a transcription
+      operationId: transcribe_getTranscriptionTranslation
+      tags:
+        - Transcribe
+      parameters:
+        - name: transcription_id
+          in: path
+          description: ID of the transcription.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: target_mode
+          in: path
+          description: Translation target mode. Use auto, en, or he.
+          required: true
+          schema:
+            type: string
+        - name: translation_style
+          in: query
+          description: Translation style id. Built-ins include learning_english and sefer_hebrew; saved user guides use custom:<style_id>.
+          required: false
+          schema:
+            type: string
+            nullable: true
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionTranslationStatus'
         "401":
           description: ""
         "404":
@@ -1554,9 +1704,120 @@ components:
         content:
           type: string
           nullable: true
-          description: OCR output for the page (Markdown).
+          description: OCR output for the page (HTML).
       required:
         - page_num
+    OcrTranslationRequest:
+      title: OcrTranslationRequest
+      type: object
+      properties:
+        target_mode:
+          type: string
+          nullable: true
+          description: Translation target mode. Use "auto" to translate Hebrew pages to English and English pages to Hebrew.
+        translation_style:
+          type: string
+          nullable: true
+          description: Translation style id. Built-ins include learning_english and sefer_hebrew; saved user guides use custom:<style_id>.
+        force:
+          type: boolean
+          nullable: true
+          description: Regenerate translated pages even when cached pages are current.
+    OcrTranslationPage:
+      title: OcrTranslationPage
+      type: object
+      properties:
+        page_num:
+          type: integer
+          description: 1-indexed page number.
+        source_hash:
+          type: string
+          description: SHA-256 hash of the OCR content used for this translation.
+        source_language:
+          type: string
+          nullable: true
+          description: Detected source language for this page.
+        target_language:
+          type: string
+          nullable: true
+          description: Target language for this page.
+        content:
+          type: string
+          nullable: true
+          description: Translated OCR HTML for the page.
+        status:
+          type: string
+          description: Page translation status.
+        error:
+          type: string
+          nullable: true
+          description: Page-level translation error, if any.
+        is_stale:
+          type: boolean
+          description: True when the current OCR content no longer matches the translated source hash.
+      required:
+        - page_num
+        - source_hash
+        - status
+        - is_stale
+    OcrTranslationStatus:
+      title: OcrTranslationStatus
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: OCR job id.
+        target_mode:
+          type: string
+          description: Translation target mode.
+        translation_style:
+          type: string
+          description: Translation style id.
+        status:
+          type: string
+          description: Translation job status. NOT_STARTED means no translation has been requested for this target mode.
+        model:
+          type: string
+          nullable: true
+          description: Model used for translation.
+        total_pages:
+          type: integer
+          nullable: true
+          description: Total pages expected for translation.
+        completed_pages:
+          type: integer
+          description: Number of pages translated successfully.
+        failed_pages:
+          type: integer
+          description: Number of pages that failed translation.
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Translation job creation time.
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Translation job last update time.
+        error:
+          type: string
+          nullable: true
+          description: Job-level translation error, if any.
+        pages:
+          type: array
+          items:
+            $ref: '#/components/schemas/OcrTranslationPage'
+          description: Translation output by page.
+      required:
+        - job_id
+        - target_mode
+        - translation_style
+        - status
+        - completed_pages
+        - failed_pages
+        - pages
     OcrJobStatus:
       title: OcrJobStatus
       type: object
@@ -2352,6 +2613,135 @@ components:
       required:
         - text
         - info
+    TranscriptionTranslationRequest:
+      title: TranscriptionTranslationRequest
+      type: object
+      properties:
+        target_mode:
+          type: string
+          nullable: true
+          description: Translation target. Use auto to translate Hebrew/Yiddish/Aramaic-heavy segments to English and English-heavy segments to Hebrew.
+        translation_style:
+          type: string
+          nullable: true
+          description: Translation style id. Built-ins include learning_english and sefer_hebrew; saved user guides use custom:<style_id>.
+        force:
+          type: boolean
+          nullable: true
+          description: Regenerate the translation even if cached segments already exist.
+    TranscriptionTranslationSegment:
+      title: TranscriptionTranslationSegment
+      type: object
+      properties:
+        segment_id:
+          type: string
+          description: Stable paragraph-level segment ID used to pair original and translated text.
+        segment_index:
+          type: integer
+          description: One-based segment order in the transcription.
+        source_hash:
+          type: string
+          description: Hash of the source segment text used to generate this translation.
+        source_language:
+          type: string
+          nullable: true
+          description: Detected source language for the segment.
+        target_language:
+          type: string
+          nullable: true
+          description: Target language used for the segment.
+        start_time:
+          type: number
+          format: double
+          nullable: true
+          description: Start timestamp in seconds for the source paragraph, when available.
+        end_time:
+          type: number
+          format: double
+          nullable: true
+          description: End timestamp in seconds for the source paragraph, when available.
+        speaker:
+          type: string
+          nullable: true
+          description: Speaker label for the paragraph, when available.
+        content:
+          type: string
+          nullable: true
+          description: Translated HTML for this paragraph.
+        status:
+          type: string
+          description: Segment translation status.
+        error:
+          type: string
+          nullable: true
+          description: Error message if this segment failed.
+        is_stale:
+          type: boolean
+          description: Whether the translation was generated from an older source hash.
+      required:
+        - segment_id
+        - segment_index
+        - source_hash
+        - status
+        - is_stale
+    TranscriptionTranslationStatus:
+      title: TranscriptionTranslationStatus
+      type: object
+      properties:
+        transcription_id:
+          type: string
+          format: uuid
+          description: ID of the source transcription.
+        target_mode:
+          type: string
+          description: Translation target mode.
+        translation_style:
+          type: string
+          description: Translation style id.
+        status:
+          type: string
+          description: Overall translation status.
+        model:
+          type: string
+          nullable: true
+          description: Model used for translation.
+        total_segments:
+          type: integer
+          nullable: true
+          description: Total paragraph segments in the translation job.
+        completed_segments:
+          type: integer
+          description: Number of successfully translated segments.
+        failed_segments:
+          type: integer
+          description: Number of failed segments.
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the translation job was created.
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the translation job was last updated.
+        error:
+          type: string
+          nullable: true
+          description: Overall job error, if any.
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptionTranslationSegment'
+          description: Paragraph-level translated segments.
+      required:
+        - transcription_id
+        - target_mode
+        - translation_style
+        - status
+        - completed_segments
+        - failed_segments
+        - segments
     Timestamp:
       title: Timestamp
       type: object
