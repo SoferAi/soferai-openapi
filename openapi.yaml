@@ -29,7 +29,7 @@ paths:
 
         **Choose a processing mode:**
 
-        - **Express mode**: Transcriptions start immediately. Max 10 files. Higher cost. Pass `audio_sources` directly in the request. Pricing for v1 is $1.20/hour.
+        - **Express mode**: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.20/hour.
         - **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.
 
         All files in the batch share the same transcription settings (model, language, etc.) defined in `info`.
@@ -1565,7 +1565,7 @@ components:
           description: Final title saved to the transcription.
         model:
           type: string
-          description: Gemini model used to generate the title.
+          description: Model version used to generate the title.
       required:
         - transcription_id
         - mode
@@ -2009,7 +2009,7 @@ components:
           description: |-
             Choose how the batch is processed:
             - `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.
-            - `express`: Higher cost, starts immediately. Max 10 files. Use with `audio_sources`. Pricing for v1 is $1.20/hour.
+            - `express`: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.20/hour.
         batch_file_id:
           type: string
           format: uuid
