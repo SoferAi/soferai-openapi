@@ -2338,7 +2338,7 @@
           },
           "model": {
             "type": "string",
-            "description": "Model version used to generate the title."
+            "description": "Gemini model used to generate the title."
           }
         },
         "required": [
@@ -2485,11 +2485,6 @@
             "type": "string",
             "nullable": true,
             "description": "Optional hint for file type (pdf or image)."
-          },
-          "model": {
-            "type": "string",
-            "nullable": true,
-            "description": "OCR mode to use. \"normal\" for standard documents, \"enhanced\" for difficult texts like Rashi script or low quality scans."
           }
         },
         "required": [
