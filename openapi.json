@@ -3615,6 +3615,11 @@
             "type": "string",
             "description": "Hash of the source segment text used to generate this translation."
           },
+          "source_text": {
+            "type": "string",
+            "nullable": true,
+            "description": "Exact visible source paragraph text paired with this translated paragraph."
+          },
           "source_language": {
             "type": "string",
             "nullable": true,
