@@ -37,7 +37,7 @@
     },
     "/v1/transcriptions/batch": {
       "post": {
-        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.20/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.\n\nSpeaker settings can be provided at the batch level or per item. Per-item `num_speakers` or `auto_detect_speakers` settings take precedence over the batch-level speaker settings in `info`. If an item omits both speaker fields, it inherits the batch-level setting. If neither level provides a speaker setting, the transcription defaults to one speaker. Do not provide both `num_speakers` and `auto_detect_speakers` in the same object.\n\nIf you include a `client_item_id` on each item, it must be unique within the batch. You can later resolve a `client_item_id` back to the canonical transcription ID with [Get Batch Transcription By Client Item ID](/api-reference/batch-transcribe/get-batch-transcription-by-client-item-id).",
+        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.50/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $1.00/hour. If you need higher limits, contact support@sofer.ai.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.\n\nSpeaker settings can be provided at the batch level or per item. Per-item `num_speakers` or `auto_detect_speakers` settings take precedence over the batch-level speaker settings in `info`. If an item omits both speaker fields, it inherits the batch-level setting. If neither level provides a speaker setting, the transcription defaults to one speaker. Do not provide both `num_speakers` and `auto_detect_speakers` in the same object.\n\nIf you include a `client_item_id` on each item, it must be unique within the batch. You can later resolve a `client_item_id` back to the canonical transcription ID with [Get Batch Transcription By Client Item ID](/api-reference/batch-transcribe/get-batch-transcription-by-client-item-id).",
         "operationId": "batchTranscribe_createBatchTranscription",
         "tags": [
           "BatchTranscribe"
@@ -2873,7 +2873,7 @@
           "processing_mode": {
             "$ref": "#/components/schemas/ProcessingMode",
             "nullable": true,
-            "description": "Choose how the batch is processed:\n- `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.\n- `express`: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.20/hour."
+            "description": "Choose how the batch is processed:\n- `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`. Pricing for v1 batch standard is $1.00/hour. If you need higher limits, contact support@sofer.ai.\n- `express`: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.50/hour."
           },
           "batch_file_id": {
             "type": "string",
@@ -3410,7 +3410,7 @@
           "model": {
             "type": "string",
             "nullable": true,
-            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.20 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
+            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.50 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
           },
           "id": {
             "$ref": "#/components/schemas/TranscriptionId",
@@ -3454,7 +3454,7 @@
           "model": {
             "type": "string",
             "nullable": true,
-            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.20 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
+            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.50 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
           },
           "title": {
             "type": "string",
