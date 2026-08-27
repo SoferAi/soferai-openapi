@@ -37,7 +37,7 @@
     },
     "/v1/transcriptions/batch": {
       "post": {
-        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.20/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.\n\nSpeaker settings can be provided at the batch level or per item. Per-item `num_speakers` or `auto_detect_speakers` settings take precedence over the batch-level speaker settings in `info`. If an item omits both speaker fields, it inherits the batch-level setting. If neither level provides a speaker setting, the transcription defaults to one speaker. Do not provide both `num_speakers` and `auto_detect_speakers` in the same object.\n\nIf you include a `client_item_id` on each item, it must be unique within the batch. You can later resolve a `client_item_id` back to the canonical transcription ID with [Get Batch Transcription By Client Item ID](/api-reference/batch-transcribe/get-batch-transcription-by-client-item-id).",
+        "description": "Create multiple transcriptions in a single batch request.\n\n**Choose a processing mode:**\n\n- **Express mode**: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.50/hour.\n- **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $1.00/hour. If you need higher limits, contact support@sofer.ai.\n\nAll files in the batch share the same transcription settings (model, language, etc.) defined in `info`.\n\nSpeaker settings can be provided at the batch level or per item. Per-item `num_speakers` or `auto_detect_speakers` settings take precedence over the batch-level speaker settings in `info`. If an item omits both speaker fields, it inherits the batch-level setting. If neither level provides a speaker setting, the transcription defaults to one speaker. Do not provide both `num_speakers` and `auto_detect_speakers` in the same object.\n\nIf you include a `client_item_id` on each item, it must be unique within the batch. You can later resolve a `client_item_id` back to the canonical transcription ID with [Get Batch Transcription By Client Item ID](/api-reference/batch-transcribe/get-batch-transcription-by-client-item-id).",
         "operationId": "batchTranscribe_createBatchTranscription",
         "tags": [
           "BatchTranscribe"
@@ -965,6 +965,726 @@
         ]
       }
     },
+    "/v1/documents/": {
+      "post": {
+        "description": "Create a durable document from plain text, Markdown, or a Word `.docx` file.\n\nProvide exactly one of `content` or `file`. Files must be base64 encoded. Text,\nMarkdown, and Word ingestion completes synchronously. The returned `id` is the\ndocument ID used by every document, translation, and folder endpoint.",
+        "operationId": "documents_createDocument",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "413": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentCreateRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "List the authenticated API user's documents using cursor pagination.",
+        "operationId": "documents_listDocuments",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of documents to return. Defaults to 50 and cannot exceed 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "name": "folder_id",
+            "in": "query",
+            "description": "Return only documents in this folder. Omit to list documents across all folders.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "nullable": true
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "description": "Return archived or active documents. Defaults to false.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Optionally filter by transcript or text document type.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentFilterType",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/documents/{document_id}": {
+      "get": {
+        "description": "Retrieve an owned document. A transcription ID returned by an existing\ntranscription endpoint is already a document ID; no conversion is required.",
+        "operationId": "documents_getDocument",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "Stable document ID.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "description": "Update document metadata. Omitted fields are unchanged. An explicitly null\n`folder_id` moves the document to root; a UUID moves it into that owned folder.",
+        "operationId": "documents_updateDocument",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "Stable document ID.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentUpdateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/translations": {
+      "post": {
+        "description": "Start a document translation. Text and transcript documents use paragraph-level\ntranslation.\n\n**API price:** $0.25 per 1,000 billable words, deducted from your API balance.\nPricing is prorated to the word: 1,000 billable words costs $0.25 and 10,000\nbillable words costs $2.50. Cached current paragraphs are free; stale, missing,\nfailed, forced, or newly added paragraphs are billable.\n\nRepeated requests for the same document and translation configuration reuse\ncached work and the same billing identity, preventing duplicate charges.\n\nA document can have multiple translations. Each combination of target language and\ntranslation style is stored separately, so the same document can be translated\ninto both English and Hebrew without duplicating the source document.",
+        "operationId": "documents_createDocumentTranslation",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "Stable document ID.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTranslationStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "402": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentTranslationRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/translations/{target_language}": {
+      "get": {
+        "description": "Get the translation for a target language and style, including current status,\nremaining billable words, estimated API cost, and translated content.\n\nThe service rebuilds the document's current paragraphs or pages and compares\ntheir hashes with the hashes stored during translation. Changed source content\nis returned as stale and becomes billable again when translation is requested.",
+        "operationId": "documents_getDocumentTranslation",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "Stable document ID.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentId"
+            }
+          },
+          {
+            "name": "target_language",
+            "in": "path",
+            "description": "Target language used when the translation was created, or `auto` for automatic direction selection.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentTranslationTargetLanguage"
+            }
+          },
+          {
+            "name": "translation_style",
+            "in": "query",
+            "description": "Translation style ID. Built-ins are `default`, `learning_english` for an\nEnglish target, and `sefer_hebrew` for a Hebrew target. Omit this to use\n`default`. Custom style IDs come from `/v1/translation-styles`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTranslationStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/folders/": {
+      "post": {
+        "description": "Create an owned document folder, optionally nested beneath another owned folder.",
+        "operationId": "folders_createFolder",
+        "tags": [
+          "Folders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FolderCreateRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "List owned folders using cursor pagination.",
+        "operationId": "folders_listFolders",
+        "tags": [
+          "Folders"
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of folders to return. Defaults to 50 and cannot exceed 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "description": "Return children of this folder. Omit to list all owned folders.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/folders/{folder_id}": {
+      "get": {
+        "description": "Retrieve an owned document folder.",
+        "operationId": "folders_getFolder",
+        "tags": [
+          "Folders"
+        ],
+        "parameters": [
+          {
+            "name": "folder_id",
+            "in": "path",
+            "description": "Folder ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "description": "Rename or move a folder. Omitted fields are unchanged.\nAn explicitly null `parent_id` moves the folder to the root.",
+        "operationId": "folders_updateFolder",
+        "tags": [
+          "Folders"
+        ],
+        "parameters": [
+          {
+            "name": "folder_id",
+            "in": "path",
+            "description": "Folder ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FolderUpdateRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete an empty owned folder. This operation is non-recursive and returns 409\nwhen the folder contains documents or child folders.",
+        "operationId": "folders_deleteFolder",
+        "tags": [
+          "Folders"
+        ],
+        "parameters": [
+          {
+            "name": "folder_id",
+            "in": "path",
+            "description": "Folder ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderDeleteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/folders/{folder_id}/documents": {
+      "get": {
+        "description": "List owned documents directly contained by an owned folder.",
+        "operationId": "folders_listFolderDocuments",
+        "tags": [
+          "Folders"
+        ],
+        "parameters": [
+          {
+            "name": "folder_id",
+            "in": "path",
+            "description": "Folder ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of documents to return. Defaults to 50 and cannot exceed 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "description": "Return archived or active documents. Defaults to false.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Optionally filter by document type.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentFilterType",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/health/": {
       "get": {
         "operationId": "health_getHealth",
@@ -1216,6 +1936,104 @@
         ]
       }
     },
+    "/v1/ocr/": {
+      "post": {
+        "description": "Upload a base64-encoded PDF or image and start OCR. The returned `document_id`\nis the only public identifier: it works with this OCR endpoint and every\n`/documents/{document_id}` endpoint.\n\nPDF pages are counted server-side and images count as one page. The estimated\nAPI balance charge is reserved before OCR starts. The `ocr.page` meter must have\nan active price in the external product catalog.",
+        "operationId": "ocr_createOcrDocument",
+        "tags": [
+          "Ocr"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcrDocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "402": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "413": {
+            "description": ""
+          },
+          "503": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OcrDocumentCreateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ocr/{document_id}": {
+      "get": {
+        "description": "Get OCR processing status and extracted pages for an owned OCR document.",
+        "operationId": "ocr_getOcrDocument",
+        "tags": [
+          "Ocr"
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "description": "OCR document ID returned by public OCR creation.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcrDocumentStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/ocr/jobs": {
       "post": {
         "description": "Create an OCR job for a file already uploaded to Supabase Storage.",
@@ -1331,6 +2149,9 @@
             }
           },
           "401": {
+            "description": ""
+          },
+          "402": {
             "description": ""
           },
           "404": {
@@ -1684,7 +2505,7 @@
           {
             "name": "filter_hebrew_word_format",
             "in": "query",
-            "description": "Optionally filter the response to a single Hebrew word format. If set to 'en', the response text will have Hebrew characters removed and timestamps will exclude words tagged with 'he'. If set to 'he', italicized transliterations are removed from the text and timestamps will exclude words tagged only with 'en'. If set to 'hybrid', the response includes both transliteration and Hebrew characters for each word.",
+            "description": "Optionally choose a Hebrew-word rendering for the response. If set to `en`,\nHebrew characters are removed and timestamps exclude words tagged only with\n`he`. If set to `he`, italicized transliterations are removed and timestamps\nexclude words tagged only with `en`. If set to `hybrid`, the stored mixed\nrendering is returned without `en`/`he` filtering; it does not duplicate every\nHebrew word in both formats.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1738,129 +2559,6 @@
                       }
                     }
                   }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": ""
-          },
-          "404": {
-            "description": ""
-          },
-          "429": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/transcriptions/{transcription_id}/translations": {
-      "post": {
-        "description": "Start a background paragraph-level translation for a completed transcription",
-        "operationId": "transcribe_createTranscriptionTranslation",
-        "tags": [
-          "Transcribe"
-        ],
-        "parameters": [
-          {
-            "name": "transcription_id",
-            "in": "path",
-            "description": "ID of the transcription to translate.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptionTranslationStatus"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": ""
-          },
-          "404": {
-            "description": ""
-          },
-          "429": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TranscriptionTranslationRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/transcriptions/{transcription_id}/translations/{target_mode}": {
-      "get": {
-        "description": "Get paragraph-level translation status and translated segments for a transcription",
-        "operationId": "transcribe_getTranscriptionTranslation",
-        "tags": [
-          "Transcribe"
-        ],
-        "parameters": [
-          {
-            "name": "transcription_id",
-            "in": "path",
-            "description": "ID of the transcription.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "target_mode",
-            "in": "path",
-            "description": "Translation target mode. Use auto, en, or he.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "translation_style",
-            "in": "query",
-            "description": "Translation style id. Built-ins include learning_english and sefer_hebrew; saved user guides use custom:<style_id>.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptionTranslationStatus"
                 }
               }
             }
@@ -1968,6 +2666,250 @@
             "description": ""
           },
           "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/translation-styles/": {
+      "get": {
+        "description": "List the built-in translation styles and the authenticated API user's custom\nstyles. Optionally filter the result by a compatible target language.",
+        "operationId": "translationStyles_listTranslationStyles",
+        "tags": [
+          "TranslationStyles"
+        ],
+        "parameters": [
+          {
+            "name": "target_language",
+            "in": "query",
+            "description": "Return only styles compatible with this target language.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TranslationStyleTargetLanguage",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationStyleListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "description": "Create a reusable custom translation style. The instructions are safety-validated\nand must only describe translation wording, tone, register, terminology,\ntransliteration, quote handling, or similar style choices. Instructions cannot\noverride the target language, change document structure, summarize, add content,\nselect a model, or alter output-format and safety rules.\n\nUse the returned `id` directly as `translation_style` when creating a translation.",
+        "operationId": "translationStyles_createTranslationStyle",
+        "tags": [
+          "TranslationStyles"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationStyle"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          },
+          "503": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslationStyleCreateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/translation-styles/{translation_style_id}": {
+      "get": {
+        "description": "Retrieve a built-in style or an owned custom translation style.",
+        "operationId": "translationStyles_getTranslationStyle",
+        "tags": [
+          "TranslationStyles"
+        ],
+        "parameters": [
+          {
+            "name": "translation_style_id",
+            "in": "path",
+            "description": "Built-in or custom translation style ID.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationStyle"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "description": "Rename an owned custom style or replace its instructions. Changed instructions\nare safety-validated again and invalidate translations cached under this style.\nBuilt-in styles cannot be modified, and a custom style's target language is immutable.",
+        "operationId": "translationStyles_updateTranslationStyle",
+        "tags": [
+          "TranslationStyles"
+        ],
+        "parameters": [
+          {
+            "name": "translation_style_id",
+            "in": "path",
+            "description": "Custom translation style ID.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationStyle"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          },
+          "503": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslationStyleUpdateRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete an owned custom translation style. Built-in styles cannot be deleted.",
+        "operationId": "translationStyles_deleteTranslationStyle",
+        "tags": [
+          "TranslationStyles"
+        ],
+        "parameters": [
+          {
+            "name": "translation_style_id",
+            "in": "path",
+            "description": "Custom translation style ID.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationStyleDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
             "description": ""
           }
         },
@@ -2273,6 +3215,475 @@
           "transcription_id"
         ]
       },
+      "DocumentId": {
+        "title": "DocumentId",
+        "type": "string",
+        "format": "uuid",
+        "description": "Stable identifier for a durable document."
+      },
+      "DocumentTranslationTargetLanguage": {
+        "title": "DocumentTranslationTargetLanguage",
+        "type": "string",
+        "enum": [
+          "auto",
+          "en",
+          "he"
+        ],
+        "description": "Requested translation language, plus `auto` for automatic English/Hebrew direction selection."
+      },
+      "DocumentFilterType": {
+        "title": "DocumentFilterType",
+        "type": "string",
+        "enum": [
+          "transcript",
+          "text"
+        ],
+        "description": "Publicly filterable document types."
+      },
+      "DocumentFormat": {
+        "title": "DocumentFormat",
+        "type": "string",
+        "enum": [
+          "text",
+          "markdown",
+          "docx"
+        ],
+        "description": "Source format for a directly uploaded text document."
+      },
+      "DocumentCreateRequest": {
+        "title": "DocumentCreateRequest",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display title. Defaults to the file name without its extension or Untitled Document."
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional owned folder. Null or omitted creates the document at root."
+          },
+          "format": {
+            "$ref": "#/components/schemas/DocumentFormat",
+            "nullable": true,
+            "description": "Source format. Defaults to text for content and is inferred from file_name for files."
+          },
+          "content": {
+            "type": "string",
+            "nullable": true,
+            "description": "UTF-8 plain-text or Markdown content. Provide this or file, but not both."
+          },
+          "file": {
+            "type": "string",
+            "nullable": true,
+            "description": "Base64-encoded `.txt`, `.md`, or `.docx` file. Provide this or content, but not both."
+          },
+          "file_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Original file name. Used to infer format and title when those values are omitted."
+          }
+        }
+      },
+      "DocumentUpdateRequest": {
+        "title": "DocumentUpdateRequest",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "New display title. Omit to leave unchanged."
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Omit to leave unchanged, send null to move to root, or send an owned folder UUID."
+          },
+          "archived": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Archive or restore the document. Archived documents are moved to root."
+          }
+        }
+      },
+      "Document": {
+        "title": "Document",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/DocumentId",
+            "description": "Stable document ID."
+          },
+          "type": {
+            "type": "string",
+            "description": "Document source type."
+          },
+          "title": {
+            "type": "string",
+            "description": "Display title."
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Containing folder, or null for root."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current document or processing status."
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "Whether the document is archived."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation time."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last update time, when available."
+          },
+          "text": {
+            "type": "string",
+            "nullable": true,
+            "description": "Visible plain text for completed text and transcript documents when available."
+          },
+          "html": {
+            "type": "string",
+            "nullable": true,
+            "description": "Editor-compatible HTML for completed documents when available."
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "status",
+          "archived",
+          "created_at"
+        ]
+      },
+      "DocumentListResponse": {
+        "title": "DocumentListResponse",
+        "type": "object",
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Document"
+            },
+            "description": "Documents in this page."
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page, or null when this is the last page."
+          }
+        },
+        "required": [
+          "documents"
+        ]
+      },
+      "DocumentTranslationRequest": {
+        "title": "DocumentTranslationRequest",
+        "type": "object",
+        "properties": {
+          "target_language": {
+            "$ref": "#/components/schemas/DocumentTranslationTargetLanguage",
+            "nullable": true,
+            "description": "Translation target language. Use `en` or `he`; omit it to use automatic\nEnglish/Hebrew direction selection. Custom styles and language-specific\nbuilt-ins require their explicit compatible target language."
+          },
+          "translation_style": {
+            "type": "string",
+            "nullable": true,
+            "description": "Translation style ID. Built-ins are `default` for a clear natural translation,\n`learning_english` for polished Torah-learning English, and `sefer_hebrew` for\ntraditional sefer-style Hebrew. Custom style IDs come from `/v1/translation-styles`.\nOmit this to use `default`. `learning_english` requires target language `en`,\n`sefer_hebrew` requires `he`, and each custom style declares its compatible language."
+          },
+          "force": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Regenerate the translation even if cached content already exists."
+          }
+        }
+      },
+      "DocumentTranslationSegment": {
+        "title": "DocumentTranslationSegment",
+        "type": "object",
+        "properties": {
+          "segment_id": {
+            "type": "string",
+            "description": "Stable paragraph or page ID used to pair source and translated content."
+          },
+          "segment_index": {
+            "type": "integer",
+            "description": "One-based paragraph or page order in the document."
+          },
+          "source_hash": {
+            "type": "string",
+            "description": "Hash of the exact source content used for this translation. It is compared with the current source hash to detect edits."
+          },
+          "source_text": {
+            "type": "string",
+            "nullable": true,
+            "description": "Exact visible source paragraph. OCR page responses may omit this because the page structure is represented in HTML."
+          },
+          "source_language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detected source language."
+          },
+          "target_language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Translation target language."
+          },
+          "start_time": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Source start time in seconds when the document is a transcription."
+          },
+          "end_time": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Source end time in seconds when the document is a transcription."
+          },
+          "speaker": {
+            "type": "string",
+            "nullable": true,
+            "description": "Speaker label when the document is a transcription."
+          },
+          "content": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sanitized translated HTML. HTML preserves paragraph direction, emphasis, source quotations, and OCR page layout that plain text would lose."
+          },
+          "status": {
+            "type": "string",
+            "description": "Segment translation status."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message if this segment failed."
+          },
+          "is_stale": {
+            "type": "boolean",
+            "description": "True when the current source hash differs from `source_hash`; requesting translation again updates only stale or missing segments unless `force` is true."
+          }
+        },
+        "required": [
+          "segment_id",
+          "segment_index",
+          "source_hash",
+          "status",
+          "is_stale"
+        ]
+      },
+      "DocumentTranslationStatus": {
+        "title": "DocumentTranslationStatus",
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "$ref": "#/components/schemas/DocumentId",
+            "description": "Stable source document ID."
+          },
+          "target_language": {
+            "$ref": "#/components/schemas/DocumentTranslationTargetLanguage",
+            "description": "Requested translation language. With `auto`, each segment reports its concrete language in its own `target_language` field."
+          },
+          "translation_style": {
+            "type": "string",
+            "description": "Translation style ID used for this independently stored target-language translation."
+          },
+          "status": {
+            "type": "string",
+            "description": "Overall translation status."
+          },
+          "total_segments": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Total paragraphs or pages in the translation job."
+          },
+          "completed_segments": {
+            "type": "integer",
+            "description": "Number of successfully translated paragraphs or pages."
+          },
+          "failed_segments": {
+            "type": "integer",
+            "description": "Number of failed paragraphs or pages."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the translation job was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the translation job was last updated."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Overall job error, if any."
+          },
+          "source_word_count": {
+            "type": "integer",
+            "description": "Total visible words across the document's current paragraphs or pages, including content that already has a current translation."
+          },
+          "billable_word_count": {
+            "type": "integer",
+            "description": "Words in missing, failed, forced, or stale segments that still need translation. Cached current segments are excluded, so this can be zero even when `source_word_count` is not."
+          },
+          "estimated_api_cost_cents": {
+            "type": "number",
+            "format": "double",
+            "description": "Estimated API balance reservation for the current `billable_word_count`, in cents, at $0.25 per 1,000 words. For example, `25` means $0.25 and `250` means $2.50. This is an estimate of remaining work, not a historical invoice, and normally becomes zero after all current segments are translated."
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentTranslationSegment"
+            },
+            "description": "Paragraph- or page-level results for this target language and translation style."
+          }
+        },
+        "required": [
+          "document_id",
+          "target_language",
+          "translation_style",
+          "status",
+          "completed_segments",
+          "failed_segments",
+          "source_word_count",
+          "billable_word_count",
+          "estimated_api_cost_cents",
+          "segments"
+        ]
+      },
+      "FolderCreateRequest": {
+        "title": "FolderCreateRequest",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Folder name. Names are case-insensitively unique among siblings."
+          },
+          "parent_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional owned parent folder. Null or omitted creates a root folder."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "FolderUpdateRequest": {
+        "title": "FolderUpdateRequest",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "New folder name. Omit to leave unchanged."
+          },
+          "parent_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Omit to leave unchanged, null to move to root, or an owned folder UUID."
+          }
+        }
+      },
+      "Folder": {
+        "title": "Folder",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Folder ID."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "parent_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Parent folder ID, or null for a root folder."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation time."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update time."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "FolderListResponse": {
+        "title": "FolderListResponse",
+        "type": "object",
+        "properties": {
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Folder"
+            },
+            "description": "Folders in this page."
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page, or null when this is the last page."
+          }
+        },
+        "required": [
+          "folders"
+        ]
+      },
+      "FolderDeleteResponse": {
+        "title": "FolderDeleteResponse",
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "description": "True when the folder was deleted."
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Deleted folder ID."
+          }
+        },
+        "required": [
+          "deleted",
+          "folder_id"
+        ]
+      },
       "HealthResponse": {
         "title": "HealthResponse",
         "type": "object",
@@ -2457,6 +3868,132 @@
           "success"
         ]
       },
+      "OcrDocumentCreateRequest": {
+        "title": "OcrDocumentCreateRequest",
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display title. Defaults to the file name without its extension."
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional owned document folder. Null or omitted creates the OCR document at root."
+          },
+          "file": {
+            "type": "string",
+            "description": "Base64-encoded PDF or image bytes."
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Original file name including extension."
+          },
+          "content_type": {
+            "type": "string",
+            "description": "MIME type such as application/pdf, image/png, or image/jpeg."
+          }
+        },
+        "required": [
+          "file",
+          "file_name",
+          "content_type"
+        ]
+      },
+      "OcrDocumentResponse": {
+        "title": "OcrDocumentResponse",
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "$ref": "#/components/schemas/DocumentId",
+            "description": "Stable OCR document ID. There is no separate public OCR job ID."
+          },
+          "status": {
+            "type": "string",
+            "description": "Initial OCR status, normally PENDING."
+          },
+          "num_pages": {
+            "type": "integer",
+            "description": "Number of pages counted server-side and reserved for billing."
+          },
+          "estimated_api_cost_cents": {
+            "type": "number",
+            "format": "double",
+            "description": "API balance amount reserved for the estimated page count."
+          }
+        },
+        "required": [
+          "document_id",
+          "status",
+          "num_pages",
+          "estimated_api_cost_cents"
+        ]
+      },
+      "OcrDocumentStatus": {
+        "title": "OcrDocumentStatus",
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "$ref": "#/components/schemas/DocumentId",
+            "description": "Stable OCR document ID. Internally this is also the current OCR job key."
+          },
+          "title": {
+            "type": "string",
+            "description": "Document title."
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Containing document folder, or null for root."
+          },
+          "file_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Original file name."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Document creation time."
+          },
+          "num_pages": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Total number of pages detected."
+          },
+          "completed_pages": {
+            "type": "integer",
+            "description": "Pages successfully processed so far."
+          },
+          "failed_pages": {
+            "type": "integer",
+            "description": "Pages that failed processing so far."
+          },
+          "status": {
+            "type": "string",
+            "description": "OCR status such as PENDING, PROCESSING, COMPLETED, or FAILED."
+          },
+          "pages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OcrPage"
+            },
+            "description": "OCR output by page."
+          }
+        },
+        "required": [
+          "document_id",
+          "title",
+          "completed_pages",
+          "failed_pages",
+          "status",
+          "pages"
+        ]
+      },
       "OcrJobCreateRequest": {
         "title": "OcrJobCreateRequest",
         "type": "object",
@@ -2546,6 +4083,12 @@
             "type": "boolean",
             "nullable": true,
             "description": "Regenerate translated pages even when cached pages are current."
+          },
+          "requested_by": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Site user who initiated this translation. Internal requests only."
           }
         }
       },
@@ -2653,6 +4196,23 @@
             "nullable": true,
             "description": "Job-level translation error, if any."
           },
+          "source_word_count": {
+            "type": "integer",
+            "description": "Total source words in the current OCR document."
+          },
+          "billable_word_count": {
+            "type": "integer",
+            "description": "Source words that still require model translation for this request."
+          },
+          "credits_required": {
+            "type": "integer",
+            "description": "Document AI credits required at 10 credits per 1,000 words, rounded up to a whole credit."
+          },
+          "estimated_api_cost_cents": {
+            "type": "number",
+            "format": "double",
+            "description": "Estimated API balance charge in cents, at $0.25 per 1,000 billable words."
+          },
           "pages": {
             "type": "array",
             "items": {
@@ -2668,6 +4228,10 @@
           "status",
           "completed_pages",
           "failed_pages",
+          "source_word_count",
+          "billable_word_count",
+          "credits_required",
+          "estimated_api_cost_cents",
           "pages"
         ]
       },
@@ -2873,7 +4437,7 @@
           "processing_mode": {
             "$ref": "#/components/schemas/ProcessingMode",
             "nullable": true,
-            "description": "Choose how the batch is processed:\n- `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`. Pricing for v1 batch standard is $0.90/hour. If you need higher limits, contact support@sofer.ai.\n- `express`: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.20/hour."
+            "description": "Choose how the batch is processed:\n- `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`. Pricing for v1 batch standard is $1.00/hour. If you need higher limits, contact support@sofer.ai.\n- `express`: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.50/hour."
           },
           "batch_file_id": {
             "type": "string",
@@ -3385,9 +4949,8 @@
       },
       "TranscriptionId": {
         "title": "TranscriptionId",
-        "type": "string",
-        "format": "uuid",
-        "description": "ID of the transcription"
+        "$ref": "#/components/schemas/DocumentId",
+        "description": "Legacy alias for the durable document ID. No conversion is required."
       },
       "Status": {
         "title": "Status",
@@ -3410,7 +4973,7 @@
           "model": {
             "type": "string",
             "nullable": true,
-            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.20 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
+            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.50 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
           },
           "id": {
             "$ref": "#/components/schemas/TranscriptionId",
@@ -3421,6 +4984,12 @@
             "type": "string",
             "nullable": true,
             "description": "Title for the transcription, Default is \"Untitled\""
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional owned document folder. Null or omitted creates the transcript at root."
           },
           "primary_language": {
             "$ref": "#/components/schemas/Language",
@@ -3433,7 +5002,7 @@
               "$ref": "#/components/schemas/LettersLanguage"
             },
             "nullable": true,
-            "description": "Relevant only if the primary language is English. This setting determines how non-English word, are formatted in the transcription.\n- To include Hebrew words in their original Hebrew letters, specify \"he\".\n- To transliterate Hebrew words into English letters, specify \"en\".\n- If both \"he\" and \"en\" are specified, each Hebrew word will be provided in both formats, with the transliteration in <i> tags.\n- If the primary language is English, the default is to include both English transliteration and original Hebrew letters (\"en\" and \"he\").\n- If the primary language is not English, the default and only option is to include Hebrew words in their original Hebrew letters (\"he\")."
+            "description": "Relevant only when `primary_language` is `en`. This setting controls how Hebrew,\nYiddish, and Aramaic speech is rendered.\n- Omit it or specify `[\"hybrid\"]` (the default) to transliterate phrases of three\n  words or fewer in italicized English letters and write longer phrases in Hebrew letters.\n- Specify `[\"he\"]` to write all such speech in Hebrew letters.\n- Specify `[\"en\"]` to transliterate all such speech into italicized English letters.\n- Specify `[\"en\", \"he\"]` to provide every Hebrew word in both formats, with the\n  transliteration in `<i>` tags.\n- When the primary language is not English, omit this field or specify `[\"he\"]`;\n  `[\"he\"]` is the only supported format."
           },
           "num_speakers": {
             "type": "integer",
@@ -3454,12 +5023,18 @@
           "model": {
             "type": "string",
             "nullable": true,
-            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.20 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
+            "description": "Model to be used for the transcription. Default is \"v1\".\n- v1: Our latest and most accurate model, especially for audio with longer stretches of Hebrew.\nPriced at 1.50 USD per hour of audio transcribed.\n- v0: Not generally recommended. Cheaper, but less accurate.\nPriced at 1.00 USD per hour."
           },
           "title": {
             "type": "string",
             "nullable": true,
             "description": "Title for the transcription, Default is \"Untitled\""
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional owned document folder applied to every transcript created by this batch."
           },
           "primary_language": {
             "$ref": "#/components/schemas/Language",
@@ -3472,7 +5047,7 @@
               "$ref": "#/components/schemas/LettersLanguage"
             },
             "nullable": true,
-            "description": "Relevant only if the primary language is English. This setting determines how non-English word, are formatted in the transcription.\n- To include Hebrew words in their original Hebrew letters, specify \"he\".\n- To transliterate Hebrew words into English letters, specify \"en\".\n- If both \"he\" and \"en\" are specified, each Hebrew word will be provided in both formats, with the transliteration in <i> tags.\n- If the primary language is English, the default is to include both English transliteration and original Hebrew letters (\"en\" and \"he\").\n- If the primary language is not English, the default and only option is to include Hebrew words in their original Hebrew letters (\"he\")."
+            "description": "Relevant only when `primary_language` is `en`. This setting controls how Hebrew,\nYiddish, and Aramaic speech is rendered across the batch.\n- Omit it or specify `[\"hybrid\"]` (the default) to transliterate phrases of three\n  words or fewer in italicized English letters and write longer phrases in Hebrew letters.\n- Specify `[\"he\"]` to write all such speech in Hebrew letters.\n- Specify `[\"en\"]` to transliterate all such speech into italicized English letters.\n- Specify `[\"en\", \"he\"]` to provide every Hebrew word in both formats, with the\n  transliteration in `<i>` tags.\n- When the primary language is not English, omit this field or specify `[\"he\"]`;\n  `[\"he\"]` is the only supported format."
           },
           "num_speakers": {
             "type": "integer",
@@ -3504,6 +5079,12 @@
             "description": "Title of the transcription",
             "example": "Shiur 1"
           },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Containing document folder, or null for root."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3519,7 +5100,7 @@
             "items": {
               "$ref": "#/components/schemas/LettersLanguage"
             },
-            "description": "Indicates how Hebrew words are transcribed in the response when the primary language is English.\n- Hebrew words are in Hebrew letters if \"he\" is specified.\n- Hebrew words are transliterated into English letters if \"en\" is specified.\n- If both \"he\" and \"en\" are specified, both versions are provided back-to-back for each Hebrew word.\nTransliterated Hebrew words are surrounded by <i> tags in the response text."
+            "description": "Indicates how Hebrew words are transcribed in the response when the primary language is English.\n- `hybrid` uses italicized English transliteration for short phrases and Hebrew letters for longer phrases.\n- Hebrew words are in Hebrew letters if \"he\" is specified.\n- Hebrew words are transliterated into English letters if \"en\" is specified.\n- If both \"he\" and \"en\" are specified, both versions are provided back-to-back for each Hebrew word.\nTransliterated Hebrew words are surrounded by <i> tags in the response text."
           },
           "num_speakers": {
             "type": "integer",
@@ -3557,7 +5138,7 @@
         "properties": {
           "text": {
             "type": "string",
-            "description": "This field contains the transcription text. If the `primary_language` is English and only one `hebrew_word_format` is specified, the text will be in English with Hebrew words in the specified format. If multiple `hebrew_word_format` options are set, Hebrew words will appear in both formats, with the English transliteration in <i>Italics</i>. If the primary language is Hebrew, the text will be in Hebrew. If the primary language is French, the text will be in French, with Hebrew, Yiddish, and Aramaic words in Hebrew letters.",
+            "description": "This field contains the transcription text. For English-primary audio, the default `hybrid` format uses italicized English transliteration for short Hebrew phrases and Hebrew letters for longer phrases. With only `en` or `he`, Hebrew words use that format. If both `en` and `he` are requested, Hebrew words appear in both formats with the English transliteration in <i>italics</i>. If the primary language is Hebrew, the text is in Hebrew. If the primary language is French, the text is in French with Hebrew, Yiddish, and Aramaic words in Hebrew letters.",
             "example": "Welcome to today's <i>shiur</i> שיעור. We will discuss the <i>halacha</i> הלכה regarding..."
           },
           "timestamps": {
@@ -3596,6 +5177,12 @@
             "type": "boolean",
             "nullable": true,
             "description": "Regenerate the translation even if cached segments already exist."
+          },
+          "requested_by": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Site user who initiated this translation. Internal requests only."
           }
         }
       },
@@ -3730,6 +5317,23 @@
             "nullable": true,
             "description": "Overall job error, if any."
           },
+          "source_word_count": {
+            "type": "integer",
+            "description": "Total source words in the current document."
+          },
+          "billable_word_count": {
+            "type": "integer",
+            "description": "Source words that still require model translation for this request."
+          },
+          "credits_required": {
+            "type": "integer",
+            "description": "Document AI credits required on the Sofer.AI site, at 10 credits per 1,000 words rounded up to a whole credit."
+          },
+          "estimated_api_cost_cents": {
+            "type": "number",
+            "format": "double",
+            "description": "Estimated API balance charge in cents, at $0.25 per 1,000 billable words."
+          },
           "segments": {
             "type": "array",
             "items": {
@@ -3745,6 +5349,10 @@
           "status",
           "completed_segments",
           "failed_segments",
+          "source_word_count",
+          "billable_word_count",
+          "credits_required",
+          "estimated_api_cost_cents",
           "segments"
         ]
       },
@@ -3866,6 +5474,12 @@
             "type": "string",
             "description": "Title of the transcription"
           },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Containing document folder, or null for root."
+          },
           "status": {
             "$ref": "#/components/schemas/Status",
             "description": "Current status of the transcription"
@@ -3902,6 +5516,154 @@
         },
         "required": [
           "summary"
+        ]
+      },
+      "TranslationStyleTargetLanguage": {
+        "title": "TranslationStyleTargetLanguage",
+        "type": "string",
+        "enum": [
+          "en",
+          "he"
+        ],
+        "description": "Language a custom style is designed for."
+      },
+      "TranslationStyleKind": {
+        "title": "TranslationStyleKind",
+        "type": "string",
+        "enum": [
+          "built_in",
+          "custom"
+        ]
+      },
+      "TranslationStyle": {
+        "title": "TranslationStyle",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Value to pass as `translation_style` when creating a translation."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short description of the style."
+          },
+          "target_languages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranslationStyleTargetLanguage"
+            },
+            "description": "Languages this style can be used with."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TranslationStyleKind",
+            "description": "Whether this is a built-in or user-created style."
+          },
+          "instructions": {
+            "type": "string",
+            "nullable": true,
+            "description": "The authenticated user's custom style instructions. Omitted for built-in styles."
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Whether the style instructions passed safety and scope validation."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Creation time for a custom style."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last update time for a custom style."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "target_languages",
+          "kind",
+          "verified"
+        ]
+      },
+      "TranslationStyleListResponse": {
+        "title": "TranslationStyleListResponse",
+        "type": "object",
+        "properties": {
+          "styles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranslationStyle"
+            },
+            "description": "Built-in and owned custom translation styles."
+          }
+        },
+        "required": [
+          "styles"
+        ]
+      },
+      "TranslationStyleCreateRequest": {
+        "title": "TranslationStyleCreateRequest",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name, up to 60 characters."
+          },
+          "target_language": {
+            "$ref": "#/components/schemas/TranslationStyleTargetLanguage",
+            "description": "Language translations using this style will produce."
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Style-only instructions, up to 4,000 characters. HTML is not accepted; use paired asterisks for emphasis."
+          }
+        },
+        "required": [
+          "name",
+          "target_language",
+          "instructions"
+        ]
+      },
+      "TranslationStyleUpdateRequest": {
+        "title": "TranslationStyleUpdateRequest",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "New display name. Omit to leave unchanged."
+          },
+          "instructions": {
+            "type": "string",
+            "nullable": true,
+            "description": "Replacement style-only instructions. Omit to leave unchanged."
+          }
+        }
+      },
+      "TranslationStyleDeleteResponse": {
+        "title": "TranslationStyleDeleteResponse",
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "description": "True when the custom style was deleted."
+          },
+          "translation_style_id": {
+            "type": "string",
+            "description": "Deleted custom translation style ID."
+          }
+        },
+        "required": [
+          "deleted",
+          "translation_style_id"
         ]
       },
       "DurationRequest": {
