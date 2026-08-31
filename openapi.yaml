@@ -2792,6 +2792,10 @@ components:
           type: string
           nullable: true
           description: Optional hint for file type (pdf or image).
+        model:
+          type: string
+          nullable: true
+          description: Internal site OCR mode. Omit or use standard for Mistral; legacy_enhanced is accepted only for users who enabled it in Account Settings.
       required:
         - storage_path
     OcrJobResponse:
