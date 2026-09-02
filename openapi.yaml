@@ -822,9 +822,9 @@ paths:
         Start a document translation. Text and transcript documents use paragraph-level
         translation.
 
-        **API price:** $0.25 per 1,000 billable words, deducted from your API balance.
-        Pricing is prorated to the word: 1,000 billable words costs $0.25 and 10,000
-        billable words costs $2.50. Cached current paragraphs are free; stale, missing,
+        **API price:** USD 0.25 per 1,000 billable words, deducted from your API balance.
+        Pricing is prorated to the word: 1,000 billable words costs USD 0.25 and 10,000
+        billable words costs USD 2.50. Cached current paragraphs are free; stale, missing,
         failed, forced, or newly added paragraphs are billable.
 
         Repeated requests for the same document and translation configuration reuse
@@ -1726,7 +1726,7 @@ paths:
         - BearerAuth: []
   /v1/transformations/{transcription_id}/summary:
     post:
-      description: Generate a Markdown summary for a transcription. If a summary already exists, it is returned.
+      description: Generate a Markdown summary for a transcription owned by the caller or shared with collaborator access. If a summary already exists, it is returned.
       operationId: transformations_generateSummary
       tags:
         - Transformations
@@ -1758,7 +1758,7 @@ paths:
             schema:
               $ref: '#/components/schemas/GenerateTranscriptSummaryRequest'
     get:
-      description: Get the Markdown summary for a transcription if it exists.
+      description: Get the Markdown summary for any transcription the caller can read, if a summary exists.
       operationId: transformations_getSummary
       tags:
         - Transformations
@@ -2434,7 +2434,7 @@ components:
         estimated_api_cost_cents:
           type: number
           format: double
-          description: Estimated API balance reservation for the current `billable_word_count`, in cents, at $0.25 per 1,000 words. For example, `25` means $0.25 and `250` means $2.50. This is an estimate of remaining work, not a historical invoice, and normally becomes zero after all current segments are translated.
+          description: Estimated API balance reservation for the current `billable_word_count`, in cents, at USD 0.25 per 1,000 words. For example, `25` means USD 0.25 and `250` means USD 2.50. This is an estimate of remaining work, not a historical invoice, and normally becomes zero after all current segments are translated.
         segments:
           type: array
           items:
