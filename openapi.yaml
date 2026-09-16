@@ -1584,7 +1584,7 @@ paths:
             format: uuid
         - name: target_mode
           in: path
-          description: Translation target mode (auto, en, or he).
+          description: Translation target mode (auto, en, he, or yi).
           required: true
           schema:
             type: string
@@ -2293,6 +2293,7 @@ components:
         - auto
         - en
         - he
+        - yi
       description: Requested translation language, plus `auto` for automatic English/Hebrew direction selection.
     DocumentFilterType:
       title: DocumentFilterType
@@ -2426,7 +2427,7 @@ components:
           $ref: '#/components/schemas/DocumentTranslationTargetLanguage'
           nullable: true
           description: |-
-            Translation target language. Use `en` or `he`; omit it to use automatic
+            Translation target language. Use `en`, `he`, or `yi`; omit it to use automatic
             English/Hebrew direction selection. Custom styles and language-specific
             built-ins require their explicit compatible target language.
         translation_style:
@@ -2434,10 +2435,11 @@ components:
           nullable: true
           description: |-
             Translation style ID. Built-ins are `default` for a clear natural translation,
-            `learning_english` for polished Torah-learning English, and `sefer_hebrew` for
+            `learning_english` for polished Torah-learning English, `torah_yiddish` for
+            natural beis-medrash Yiddish, and `sefer_hebrew` for
             traditional sefer-style Hebrew. Custom style IDs come from `/v1/translation-styles`.
             Omit this to use `default`. `learning_english` requires target language `en`,
-            `sefer_hebrew` requires `he`, and each custom style declares its compatible language.
+            `torah_yiddish` requires `yi`, `sefer_hebrew` requires `he`, and each custom style declares its compatible language.
         force:
           type: boolean
           nullable: true
@@ -4282,6 +4284,7 @@ components:
       enum:
         - en
         - he
+        - yi
       description: Language a custom style is designed for.
     TranslationStyleKind:
       title: TranslationStyleKind

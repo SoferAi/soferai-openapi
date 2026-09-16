@@ -2357,7 +2357,7 @@
           {
             "name": "target_mode",
             "in": "path",
-            "description": "Translation target mode (auto, en, or he).",
+            "description": "Translation target mode (auto, en, he, or yi).",
             "required": true,
             "schema": {
               "type": "string"
@@ -3388,7 +3388,8 @@
         "enum": [
           "auto",
           "en",
-          "he"
+          "he",
+          "yi"
         ],
         "description": "Requested translation language, plus `auto` for automatic English/Hebrew direction selection."
       },
@@ -3559,12 +3560,12 @@
           "target_language": {
             "$ref": "#/components/schemas/DocumentTranslationTargetLanguage",
             "nullable": true,
-            "description": "Translation target language. Use `en` or `he`; omit it to use automatic\nEnglish/Hebrew direction selection. Custom styles and language-specific\nbuilt-ins require their explicit compatible target language."
+            "description": "Translation target language. Use `en`, `he`, or `yi`; omit it to use automatic\nEnglish/Hebrew direction selection. Custom styles and language-specific\nbuilt-ins require their explicit compatible target language."
           },
           "translation_style": {
             "type": "string",
             "nullable": true,
-            "description": "Translation style ID. Built-ins are `default` for a clear natural translation,\n`learning_english` for polished Torah-learning English, and `sefer_hebrew` for\ntraditional sefer-style Hebrew. Custom style IDs come from `/v1/translation-styles`.\nOmit this to use `default`. `learning_english` requires target language `en`,\n`sefer_hebrew` requires `he`, and each custom style declares its compatible language."
+            "description": "Translation style ID. Built-ins are `default` for a clear natural translation,\n`learning_english` for polished Torah-learning English, `torah_yiddish` for\nnatural beis-medrash Yiddish, and `sefer_hebrew` for\ntraditional sefer-style Hebrew. Custom style IDs come from `/v1/translation-styles`.\nOmit this to use `default`. `learning_english` requires target language `en`,\n`torah_yiddish` requires `yi`, `sefer_hebrew` requires `he`, and each custom style declares its compatible language."
           },
           "force": {
             "type": "boolean",
@@ -5823,7 +5824,8 @@
         "type": "string",
         "enum": [
           "en",
-          "he"
+          "he",
+          "yi"
         ],
         "description": "Language a custom style is designed for."
       },
