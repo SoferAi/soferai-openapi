@@ -1979,7 +1979,7 @@
     },
     "/v1/maishiv/knowledge-base": {
       "post": {
-        "description": "Add a document to the knowledge base.",
+        "description": "Add an owned document to the user's knowledge base, shared with the website.\nAll accounts can add unlimited documents; website subscription tiers do not\nimpose a knowledge-base file-count limit. API retrievals are billed separately.",
         "operationId": "maishiv_addToKnowledgeBase",
         "tags": [
           "Maishiv"
@@ -2052,6 +2052,102 @@
             "BearerAuth": []
           }
         ]
+      }
+    },
+    "/v1/maishiv/knowledge-base/search": {
+      "post": {
+        "description": "Retrieve up to n passages from the authenticated user's Maishiv knowledge base,\nwithout generating an answer. Only owned documents are returned. Times are\nnullable seconds and are provided only for a unique, reliable audio alignment.\nEach completed search costs $0.01 from the user's prepaid API balance,\nregardless of n or the number of matches. Zero-match searches are billable.\nInvalid requests, missing knowledge bases, and failed searches are not charged.\nWebsite subscriptions and daily question allowances do not apply.",
+        "operationId": "maishiv_searchKnowledgeBaseChunks",
+        "tags": [
+          "Maishiv"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeBaseSearchChunk"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "402": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": ""
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchKnowledgeBaseChunksRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/maishiv/knowledge-base/{document_id}": {
@@ -4018,6 +4114,54 @@
         "required": [
           "name",
           "url"
+        ]
+      },
+      "SearchKnowledgeBaseChunksRequest": {
+        "title": "SearchKnowledgeBaseChunksRequest",
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query, trimmed before use; must contain 1 to 8000 characters after trimming."
+          },
+          "n": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum passages to return; an integer from 1 to 50. Defaults to 10 when omitted or null."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "KnowledgeBaseSearchChunk": {
+        "title": "KnowledgeBaseSearchChunk",
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Retrieved passage, including passages without reliable audio timing."
+          },
+          "transcript_id": {
+            "type": "string",
+            "description": "ID of the authorized source document (including non-audio documents)."
+          },
+          "start_time": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Start in seconds, or null when audio alignment is unavailable or ambiguous."
+          },
+          "end_time": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "End in seconds, or null when audio alignment is unavailable or ambiguous."
+          }
+        },
+        "required": [
+          "text",
+          "transcript_id"
         ]
       },
       "AddKnowledgeBaseDocumentRequest": {
