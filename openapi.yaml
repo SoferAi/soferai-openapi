@@ -3676,7 +3676,7 @@ components:
         id:
           $ref: '#/components/schemas/TranscriptionId'
           nullable: true
-          description: ID of the transcription. If passed, it will be set as the ID. If not, a UUID will be generated.
+          description: ID of the transcription. Any valid UUID version is accepted and preserved. If omitted, a UUIDv4 will be generated. An existing ID returns a conflict for external API requests.
         title:
           type: string
           nullable: true
