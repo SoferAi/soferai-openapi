@@ -2802,7 +2802,7 @@ components:
         model:
           type: string
           nullable: true
-          description: Internal site OCR mode. Omit or use standard for Mistral; legacy_enhanced is accepted only for users who enabled it in Account Settings.
+          description: Internal site OCR mode. Use standard (1 credit/page), legacy_enhanced (Enhanced, 5 credits/page), or handwriting (Handwriting beta, 20 credits/page). Handwriting requires a site credit reservation and provides transcription without image-to-text highlighting. The public document-upload endpoint remains Standard OCR.
       required:
         - storage_path
     OcrJobResponse:
