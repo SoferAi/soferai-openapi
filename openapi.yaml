@@ -3801,11 +3801,13 @@ components:
           example: "2024-01-15T09:30:00Z"
         primary_language:
           $ref: '#/components/schemas/Language'
-          description: The primary language of the audio content, which can be English (en), Hebrew (he), Yiddish (yi), or French (fr).
+          nullable: true
+          description: The primary language of the audio content. This is null when an upload has not yet been configured for transcription.
         hebrew_word_format:
           type: array
           items:
             $ref: '#/components/schemas/LettersLanguage'
+          nullable: true
           description: |-
             Indicates how Hebrew words are transcribed in the response when the primary language is English.
             - `hybrid` uses italicized English transliteration for short phrases and Hebrew letters for longer phrases.
@@ -3813,6 +3815,7 @@ components:
             - Hebrew words are transliterated into English letters if "en" is specified.
             - If both "he" and "en" are specified, both versions are provided back-to-back for each Hebrew word.
             Transliterated Hebrew words are surrounded by <i> tags in the response text.
+            This is null when no Hebrew-word format has been configured for the upload.
         num_speakers:
           type: integer
           nullable: true
@@ -3833,8 +3836,6 @@ components:
         - id
         - title
         - created_at
-        - primary_language
-        - hebrew_word_format
         - status
     Transcription:
       title: Transcription

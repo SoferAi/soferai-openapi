@@ -5144,14 +5144,16 @@
           },
           "primary_language": {
             "$ref": "#/components/schemas/Language",
-            "description": "The primary language of the audio content, which can be English (en), Hebrew (he), Yiddish (yi), or French (fr)."
+            "nullable": true,
+            "description": "The primary language of the audio content. This is null when an upload has not yet been configured for transcription."
           },
           "hebrew_word_format": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LettersLanguage"
             },
-            "description": "Indicates how Hebrew words are transcribed in the response when the primary language is English.\n- `hybrid` uses italicized English transliteration for short phrases and Hebrew letters for longer phrases.\n- Hebrew words are in Hebrew letters if \"he\" is specified.\n- Hebrew words are transliterated into English letters if \"en\" is specified.\n- If both \"he\" and \"en\" are specified, both versions are provided back-to-back for each Hebrew word.\nTransliterated Hebrew words are surrounded by <i> tags in the response text."
+            "nullable": true,
+            "description": "Indicates how Hebrew words are transcribed in the response when the primary language is English.\n- `hybrid` uses italicized English transliteration for short phrases and Hebrew letters for longer phrases.\n- Hebrew words are in Hebrew letters if \"he\" is specified.\n- Hebrew words are transliterated into English letters if \"en\" is specified.\n- If both \"he\" and \"en\" are specified, both versions are provided back-to-back for each Hebrew word.\nTransliterated Hebrew words are surrounded by <i> tags in the response text.\nThis is null when no Hebrew-word format has been configured for the upload."
           },
           "num_speakers": {
             "type": "integer",
@@ -5178,8 +5180,6 @@
           "id",
           "title",
           "created_at",
-          "primary_language",
-          "hebrew_word_format",
           "status"
         ]
       },
