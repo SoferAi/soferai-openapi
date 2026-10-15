@@ -1492,6 +1492,76 @@ paths:
           description: ""
       security:
         - BearerAuth: []
+  /v1/partners/transcriptions:
+    post:
+      description: |-
+        Submit user-selected audio using a connected Sofer account's website allowance.
+        Requires a registered partner OAuth access token, not a Sofer API key or ID token.
+        The transcript is saved in the connected user's Sofer account.
+        Keep the same idempotency_key and request when retrying. An uncertain submission
+        returns SUBMISSION_UNCONFIRMED and must not be submitted with a new key.
+      operationId: partners_createPartnerTranscription
+      tags:
+        - Partners
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerTranscriptionJob'
+        "401":
+          description: ""
+        "402":
+          description: ""
+        "403":
+          description: ""
+        "409":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnerTranscriptionRequest'
+  /v1/partners/transcriptions/{transcription_id}:
+    get:
+      description: |-
+        Check a job created by this partner for the connected user. Returns status and
+        a link to open the transcript in Sofer. Does not grant access to transcript text
+        or any documents submitted through other applications.
+      operationId: partners_getPartnerTranscription
+      tags:
+        - Partners
+      parameters:
+        - name: transcription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerTranscriptionJob'
+        "401":
+          description: ""
+        "403":
+          description: ""
+        "404":
+          description: ""
+        "429":
+          description: ""
+      security:
+        - BearerAuth: []
   /v1/timestamps/outline:
     post:
       description: |-
@@ -2998,6 +3068,59 @@ components:
         - job_id
         - status
         - pages
+    PartnerTranscriptionRequest:
+      title: PartnerTranscriptionRequest
+      type: object
+      properties:
+        audio_url:
+          type: string
+          description: Direct public HTTPS audio download URL. A temporary signed URL is supported.
+        title:
+          type: string
+        language:
+          $ref: '#/components/schemas/PartnerTranscriptionLanguage'
+        source_id:
+          type: string
+          description: Stable recording ID in the partner's system, used for attribution.
+        source_url:
+          type: string
+          nullable: true
+          description: Public HTTPS page URL identifying the original recording. Never include credentials.
+        idempotency_key:
+          type: string
+          description: Unique request identifier, scoped to this partner and user. Retain it across retries.
+      required:
+        - audio_url
+        - title
+        - language
+        - source_id
+        - idempotency_key
+    PartnerTranscriptionLanguage:
+      title: PartnerTranscriptionLanguage
+      type: string
+      enum:
+        - en
+        - he
+        - yi
+        - fr
+    PartnerTranscriptionJob:
+      title: PartnerTranscriptionJob
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        url:
+          type: string
+        source_id:
+          type: string
+      required:
+        - id
+        - status
+        - url
+        - source_id
     Confidence:
       title: Confidence
       type: string
