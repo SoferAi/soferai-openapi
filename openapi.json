@@ -2197,6 +2197,221 @@
         ]
       }
     },
+    "/v1/ocr/jobs/{job_id}/index": {
+      "get": {
+        "description": "Get OCR index status and stored result.",
+        "operationId": "ocr_getOcrIndex",
+        "tags": [
+          "Ocr"
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "description": "OCR job id.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "index_id",
+            "in": "query",
+            "description": "Select a specific index; omitted requests resolve the document's default index.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcrIndexStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/ocr/jobs/{job_id}/index/{index_id}/pages": {
+      "patch": {
+        "description": "Correct printed labels or entry citations in one completed index without modifying OCR or billing.",
+        "operationId": "ocr_editOcrIndexPages",
+        "tags": [
+          "Ocr"
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "index_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcrIndexStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OcrIndexPagesEditRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ocr/jobs/{job_id}/pages/{page_num}/printed-number": {
+      "get": {
+        "description": "Get the document-wide printed page mapping and its current revision.",
+        "operationId": "ocr_getOcrPrintedPage",
+        "tags": [
+          "Ocr"
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page_num",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcrPrintedPage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "description": "Correct or undo a document-wide printed number and update saved indexes, preserving index-specific overrides.",
+        "operationId": "ocr_editOcrPrintedPage",
+        "tags": [
+          "Ocr"
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page_num",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcrPrintedPage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OcrPrintedPageEditRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/partners/transcriptions": {
       "post": {
         "description": "Submit user-selected audio using a connected Sofer account's website allowance.\nRequires a registered partner OAuth access token, not a Sofer API key or ID token.\nThe transcript is saved in the connected user's Sofer account.\nKeep the same idempotency_key and request when retrying. An uncertain submission\nreturns SUBMISSION_UNCONFIRMED and must not be submitted with a new key.",
@@ -3920,6 +4135,57 @@
           "success"
         ]
       },
+      "OcrPrintedPage": {
+        "title": "OcrPrintedPage",
+        "type": "object",
+        "properties": {
+          "page_num": {
+            "type": "integer"
+          },
+          "printed_page_label": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "can_undo": {
+            "type": "boolean"
+          },
+          "updated_index_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page_num",
+          "revision",
+          "can_undo",
+          "updated_index_count"
+        ]
+      },
+      "OcrPrintedPageEditRequest": {
+        "title": "OcrPrintedPageEditRequest",
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "printed_page_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "Empty string marks an unnumbered page. Omit only when undo is true."
+          },
+          "undo": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "required": [
+          "expected_revision"
+        ]
+      },
       "OcrDocumentCreateRequest": {
         "title": "OcrDocumentCreateRequest",
         "type": "object",
@@ -4104,6 +4370,54 @@
           "job_id"
         ]
       },
+      "OcrIndexCreateRequest": {
+        "title": "OcrIndexCreateRequest",
+        "type": "object",
+        "properties": {
+          "index_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional client-generated identity for a separate index or a retry. Omit to use the document's default creation flow. Retrying an existing identity retains its original settings."
+          },
+          "index_language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Language to use for the generated index. Supported values are \"hebrew\" and \"english\"."
+          },
+          "focus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional topics, themes, figures, or questions the generated index should emphasize."
+          },
+          "audience": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional intended audience for the index."
+          },
+          "style": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional style guidance for headings, terminology, and level of detail."
+          },
+          "instructions": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional freeform editorial guidance for the indexer."
+          },
+          "document_ai_usage_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Deprecated. Caller-provided billing is rejected; reservations are created atomically by the server."
+          },
+          "billable_page_count": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Deprecated. Caller-provided billing is rejected; billable pages are counted by the server."
+          }
+        }
+      },
       "OcrPage": {
         "title": "OcrPage",
         "type": "object",
@@ -4120,6 +4434,340 @@
         },
         "required": [
           "page_num"
+        ]
+      },
+      "OcrIndexPageAnchor": {
+        "title": "OcrIndexPageAnchor",
+        "type": "object",
+        "properties": {
+          "page_num": {
+            "type": "integer",
+            "description": "1-indexed physical page number in the OCR document."
+          },
+          "sequence_number": {
+            "type": "integer",
+            "description": "Stable internal sequence number for locator ordering."
+          },
+          "display_label": {
+            "type": "string",
+            "description": "Reader-facing page label used in the generated index. Printed labels are used as-is; physical fallbacks are prefixed with \"PDF \"."
+          },
+          "printed_page_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "Visible printed page/folio label detected from the page, when available."
+          },
+          "header_title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Running header or section title associated with the page, when detected."
+          },
+          "label_source": {
+            "type": "string",
+            "description": "Source of the reader-facing page label."
+          },
+          "pdf_page_number": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Optional underlying PDF page number when the source originated from a PDF."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Page classification used by the indexer."
+          }
+        },
+        "required": [
+          "page_num",
+          "sequence_number",
+          "display_label",
+          "label_source",
+          "kind"
+        ]
+      },
+      "OcrIndexCitationEdit": {
+        "title": "OcrIndexCitationEdit",
+        "type": "object",
+        "properties": {
+          "entry_index": {
+            "type": "integer"
+          },
+          "subentry_index": {
+            "type": "integer",
+            "nullable": true
+          },
+          "page_nums": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Exact physical source pages for this entry, not printed labels. Empty removes its citations."
+          }
+        },
+        "required": [
+          "entry_index",
+          "page_nums"
+        ]
+      },
+      "OcrIndexPageLabelEdit": {
+        "title": "OcrIndexPageLabelEdit",
+        "type": "object",
+        "properties": {
+          "page_num": {
+            "type": "integer"
+          },
+          "printed_page_label": {
+            "type": "string",
+            "description": "Corrected printed label for this source page throughout this index. Empty means unnumbered."
+          }
+        },
+        "required": [
+          "page_num",
+          "printed_page_label"
+        ]
+      },
+      "OcrIndexPagesEditRequest": {
+        "title": "OcrIndexPagesEditRequest",
+        "type": "object",
+        "properties": {
+          "expected_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last observed revision. Conflicting or in-progress edits are rejected with HTTP 409."
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OcrIndexCitationEdit"
+            },
+            "nullable": true
+          },
+          "page_labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OcrIndexPageLabelEdit"
+            },
+            "nullable": true
+          }
+        },
+        "required": [
+          "expected_updated_at"
+        ]
+      },
+      "OcrIndexSubentry": {
+        "title": "OcrIndexSubentry",
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Reader-facing subentry label."
+          },
+          "subheading": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional displayed subsection heading used to group detailed subentries."
+          },
+          "locators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Compressed locator strings for the subentry."
+          },
+          "page_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Exact page labels underlying the locators."
+          },
+          "page_nums": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "nullable": true,
+            "description": "Explicit physical destinations after manual editing. Null retains legacy label-based citations."
+          }
+        },
+        "required": [
+          "label",
+          "locators",
+          "page_labels"
+        ]
+      },
+      "OcrIndexEntry": {
+        "title": "OcrIndexEntry",
+        "type": "object",
+        "properties": {
+          "heading": {
+            "type": "string",
+            "description": "Reader-facing index heading."
+          },
+          "locators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Compressed locator strings for the heading."
+          },
+          "page_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Exact page labels underlying the locators."
+          },
+          "page_nums": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "nullable": true,
+            "description": "Explicit physical destinations after manual editing. Null retains legacy label-based citations."
+          },
+          "subentries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OcrIndexSubentry"
+            },
+            "description": "Optional subentries under the heading."
+          },
+          "see": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cross-references of the form \"See ...\"."
+          },
+          "see_also": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cross-references of the form \"See also ...\"."
+          }
+        },
+        "required": [
+          "heading",
+          "locators",
+          "page_labels",
+          "subentries",
+          "see",
+          "see_also"
+        ]
+      },
+      "OcrIndexResult": {
+        "title": "OcrIndexResult",
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OcrIndexEntry"
+            },
+            "description": "Final structured index entries."
+          }
+        },
+        "required": [
+          "entries"
+        ]
+      },
+      "OcrIndexStatus": {
+        "title": "OcrIndexStatus",
+        "type": "object",
+        "properties": {
+          "index_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Stable identity of this index, independent of the source document."
+          },
+          "attempt_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Current execution attempt. Workflow retries retain this identity."
+          },
+          "index_language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Saved target language; unknown for legacy indexes without recorded settings."
+          },
+          "generation_settings": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Resolved generation settings saved for this index."
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "OCR job id."
+          },
+          "status": {
+            "type": "string",
+            "description": "Index job status (NOT_STARTED, PENDING, PROCESSING, COMPLETED, FAILED, STALE)."
+          },
+          "progress_percent": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Best-effort progress percentage for the current build, when available."
+          },
+          "source_kind": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source kind used by the indexer."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Index row creation time."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last update time for the index row."
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Completion time for the index build, when available."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "User-facing error message when the build fails."
+          },
+          "report_markdown": {
+            "type": "string",
+            "nullable": true,
+            "description": "Build report summarizing the indexing run."
+          },
+          "index_text": {
+            "type": "string",
+            "nullable": true,
+            "description": "Plain-text rendering of the generated index."
+          },
+          "page_map": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OcrIndexPageAnchor"
+            },
+            "nullable": true,
+            "description": "Stored page-anchor map for locator resolution."
+          },
+          "index": {
+            "$ref": "#/components/schemas/OcrIndexResult",
+            "nullable": true,
+            "description": "Structured final index when available."
+          }
+        },
+        "required": [
+          "job_id",
+          "status"
         ]
       },
       "OcrTranslationRequest": {
