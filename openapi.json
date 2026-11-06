@@ -5824,6 +5824,14 @@
           "hybrid"
         ]
       },
+      "TransliterationStyle": {
+        "title": "TransliterationStyle",
+        "type": "string",
+        "enum": [
+          "sefardi",
+          "ashkenazi"
+        ]
+      },
       "TranscriptionId": {
         "title": "TranscriptionId",
         "$ref": "#/components/schemas/DocumentId",
@@ -5847,6 +5855,11 @@
         "title": "TranscriptionRequestInfo",
         "type": "object",
         "properties": {
+          "transliteration_style": {
+            "$ref": "#/components/schemas/TransliterationStyle",
+            "nullable": true,
+            "description": "Pronunciation used for Hebrew and Aramaic transliteration. Omit to use the saved account preference, or Sephardi when no preference is saved. Applies when the primary language is English and Hebrew words are transliterated."
+          },
           "model": {
             "type": "string",
             "nullable": true,
@@ -5897,6 +5910,11 @@
         "title": "BatchTranscriptionRequestInfo",
         "type": "object",
         "properties": {
+          "transliteration_style": {
+            "$ref": "#/components/schemas/TransliterationStyle",
+            "nullable": true,
+            "description": "Pronunciation used for Hebrew and Aramaic transliteration across this batch. Omit to use the saved account preference, or Sephardi when no preference is saved. Applies when the primary language is English and Hebrew words are transliterated."
+          },
           "model": {
             "type": "string",
             "nullable": true,
