@@ -2412,6 +2412,217 @@
         }
       }
     },
+    "/v1/partners/recordings/{source_id}/intents": {
+      "post": {
+        "description": "Begin one-step transcription and public sharing for an independently verified\ncatalog recording. Returns a Sofer-owned recording-specific confirmation URL.\nOAuth connection alone never authorizes billing or publication. Confirming\natomically claims this integration/recording before spending the listener's\nallowance. Keep the same key across retries. Audio/title come from Sofer's\nverified catalog, never from this request.",
+        "operationId": "partners_createPartnerRecordingIntent",
+        "tags": [
+          "Partners"
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerRecordingIntent"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerRecordingIntentRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/recordings/{source_id}/status": {
+      "get": {
+        "description": "Recording-scoped shared status for connected listeners. Never returns the\ninitiator, private job ID, document link, transcript or billing information.\nWaiting listeners cannot cancel or otherwise control the initiating job.",
+        "operationId": "partners_getPartnerRecordingStatus",
+        "tags": [
+          "Partners"
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerRecordingStatus"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/partners/transcriptions/{transcription_id}/publication": {
+      "put": {
+        "description": "Explicitly publish or withdraw a canonical text snapshot of your own completed\npartner-originated job. Never publishes unrelated library documents. Require a\nseparate user confirmation explaining public text display and independent copies\nwith retained audio and existing word timestamps.\nexpected_revision is 0 for first publication; retain the key on retries.",
+        "operationId": "partners_setPartnerPublication",
+        "tags": [
+          "Partners"
+        ],
+        "parameters": [
+          {
+            "name": "transcription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerPublication"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerPublicationRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/resources/{source_id}": {
+      "get": {
+        "description": "Server-to-server display of the current explicitly published canonical text.\nRequires a dedicated read-only integration bearer credential, NOT a listener\nOAuth token. Credential is scoped to one integration; never place it in a browser.\nThe response contains plain text. Escape it when rendering HTML.",
+        "operationId": "partners_getPartnerResource",
+        "tags": [
+          "Partners"
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResource"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/partners/resources/{source_id}/copies": {
+      "post": {
+        "description": "Add the displayed canonical revision as an independent transcript with durable audio\nand existing word timestamps in the\nconnected listener's account. Requires listener OAuth, not the display key.\nDoes not run transcription, translation, outlines or Maishiv ingestion.\nOne copy per listener/resource/revision; retries return it, or 410 if deleted.\nA changed current revision returns 409. Later revisions never overwrite edits.",
+        "operationId": "partners_copyPartnerResource",
+        "tags": [
+          "Partners"
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResourceCopy"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerCopyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/partners/transcriptions": {
       "post": {
         "description": "Submit user-selected audio using a connected Sofer account's website allowance.\nRequires a registered partner OAuth access token, not a Sofer API key or ID token.\nThe transcript is saved in the connected user's Sofer account.\nKeep the same idempotency_key and request when retrying. An uncertain submission\nreturns SUBMISSION_UNCONFIRMED and must not be submitted with a new key.",
@@ -4987,6 +5198,198 @@
           "job_id",
           "status",
           "pages"
+        ]
+      },
+      "PartnerRecordingIntentRequest": {
+        "title": "PartnerRecordingIntentRequest",
+        "type": "object",
+        "properties": {
+          "idempotency_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key"
+        ]
+      },
+      "PartnerRecordingIntent": {
+        "title": "PartnerRecordingIntent",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "confirmation_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source_id",
+          "status",
+          "confirmation_url"
+        ]
+      },
+      "PartnerRecordingStatus": {
+        "title": "PartnerRecordingStatus",
+        "type": "object",
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "status"
+        ]
+      },
+      "PartnerPublicationRequest": {
+        "title": "PartnerPublicationRequest",
+        "type": "object",
+        "properties": {
+          "published": {
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "published",
+          "expected_revision",
+          "idempotency_key"
+        ]
+      },
+      "PartnerPublication": {
+        "title": "PartnerPublication",
+        "type": "object",
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "published": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "resource_id",
+          "source_id",
+          "revision",
+          "published"
+        ]
+      },
+      "PartnerResource": {
+        "title": "PartnerResource",
+        "type": "object",
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "primary_language": {
+            "type": "string",
+            "nullable": true
+          },
+          "provenance": {
+            "type": "string",
+            "const": "sofer_partner_transcription",
+            "description": "The canonical text was explicitly published from a Sofer job originating in this integration."
+          }
+        },
+        "required": [
+          "resource_id",
+          "source_id",
+          "revision",
+          "published_at",
+          "title",
+          "text",
+          "provenance"
+        ]
+      },
+      "PartnerCopyRequest": {
+        "title": "PartnerCopyRequest",
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "idempotency_key"
+        ]
+      },
+      "PartnerResourceCopy": {
+        "title": "PartnerResourceCopy",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "resource_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "resource_id",
+          "source_id",
+          "revision"
         ]
       },
       "PartnerTranscriptionRequest": {
