@@ -5013,6 +5013,59 @@ components:
         - id
         - title
         - status
+    CreateTransformationJobRequest:
+      title: CreateTransformationJobRequest
+      type: object
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        transcript_id:
+          type: string
+        prompt_template:
+          type: string
+      required:
+        - request_id
+        - transcript_id
+        - prompt_template
+    TransformationJobStatus:
+      title: TransformationJobStatus
+      type: string
+      enum:
+        - queued
+        - running
+        - completed
+        - failed
+    TransformationJobResponse:
+      title: TransformationJobResponse
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transcript_id:
+          type: string
+        prompt_template:
+          type: string
+        status:
+          $ref: '#/components/schemas/TransformationJobStatus'
+        output_text:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        used_token:
+          type: boolean
+        transcript_truncated:
+          type: boolean
+      required:
+        - id
+        - transcript_id
+        - prompt_template
+        - status
+        - used_token
+        - transcript_truncated
     GenerateTranscriptSummaryRequest:
       title: GenerateTranscriptSummaryRequest
       type: object
