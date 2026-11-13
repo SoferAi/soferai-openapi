@@ -2101,7 +2101,7 @@
     },
     "/v1/ocr/": {
       "post": {
-        "description": "Upload a base64-encoded PDF or image and start OCR. The returned `document_id`\nis the only public identifier: it works with this OCR endpoint and every\n`/documents/{document_id}` endpoint.\n\nPDF pages are counted server-side and images count as one page. The estimated\nAPI balance charge is reserved before OCR starts. The `ocr.page` meter must have\nan active price in the external product catalog.",
+        "description": "Upload a base64-encoded PDF or image and start OCR. The returned `document_id`\nis the only public identifier: it works with this OCR endpoint and every\n`/documents/{document_id}` endpoint.\n\nChoose Standard, Enhanced, or Handwriting OCR with `mode` (defaults to `standard`).\nPDFs and images up to 20 MB (before base64 encoding) are supported.\nPDF pages are counted server-side and images count as one page. Prices are\n$0.025, $0.125, and $0.25 per page respectively, matching the purchased-credit rates. The estimated API\nbalance charge is reserved before OCR starts; only successfully extracted\npages are charged, and the unused reservation is released. Poll\n`GET /v1/ocr/{document_id}` for progress and page HTML.",
         "operationId": "ocr_createOcrDocument",
         "tags": [
           "Ocr"
@@ -4352,6 +4352,15 @@
           "success"
         ]
       },
+      "OcrMode": {
+        "title": "OcrMode",
+        "type": "string",
+        "enum": [
+          "standard",
+          "enhanced",
+          "handwriting"
+        ]
+      },
       "OcrPrintedPage": {
         "title": "OcrPrintedPage",
         "type": "object",
@@ -4407,6 +4416,11 @@
         "title": "OcrDocumentCreateRequest",
         "type": "object",
         "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/OcrMode",
+            "nullable": true,
+            "description": "OCR type. Defaults to standard ($0.025/page). Enhanced costs $0.125/page; Handwriting costs $0.25/page and does not include image-to-text highlighting. Only successfully extracted pages are charged."
+          },
           "title": {
             "type": "string",
             "nullable": true,
@@ -4428,7 +4442,7 @@
           },
           "content_type": {
             "type": "string",
-            "description": "MIME type such as application/pdf, image/png, or image/jpeg."
+            "description": "Supported MIME type (application/pdf, image/bmp, image/gif, image/jpeg, image/png, image/tiff, or image/webp). Images count as one page; encrypted PDFs are unsupported."
           }
         },
         "required": [
@@ -4512,6 +4526,11 @@
             "type": "string",
             "description": "OCR status such as PENDING, PROCESSING, COMPLETED, or FAILED."
           },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "User-facing failure reason, when available. A failed document may still contain successfully extracted pages."
+          },
           "pages": {
             "type": "array",
             "items": {
@@ -4561,7 +4580,7 @@
           "model": {
             "type": "string",
             "nullable": true,
-            "description": "Internal site OCR mode. Use standard (1 credit/page), legacy_enhanced (Enhanced, 5 credits/page), or handwriting (Handwriting beta, 10 credits/page). Handwriting requires a site credit reservation and provides transcription without image-to-text highlighting. The public document-upload endpoint remains Standard OCR."
+            "description": "Internal site OCR mode. Use standard (1 credit/page), legacy_enhanced (Enhanced, 5 credits/page), or handwriting (Handwriting beta, 10 credits/page). Site requests require a matching site credit reservation. Public callers select a mode through the document-upload endpoint and use their API balance."
           }
         },
         "required": [

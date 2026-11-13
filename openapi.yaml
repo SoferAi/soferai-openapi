@@ -1432,9 +1432,13 @@ paths:
         is the only public identifier: it works with this OCR endpoint and every
         `/documents/{document_id}` endpoint.
 
-        PDF pages are counted server-side and images count as one page. The estimated
-        API balance charge is reserved before OCR starts. The `ocr.page` meter must have
-        an active price in the external product catalog.
+        Choose Standard, Enhanced, or Handwriting OCR with `mode` (defaults to `standard`).
+        PDFs and images up to 20 MB (before base64 encoding) are supported.
+        PDF pages are counted server-side and images count as one page. Prices are
+        $0.025, $0.125, and $0.25 per page respectively, matching the purchased-credit rates. The estimated API
+        balance charge is reserved before OCR starts; only successfully extracted
+        pages are charged, and the unused reservation is released. Poll
+        `GET /v1/ocr/{document_id}` for progress and page HTML.
       operationId: ocr_createOcrDocument
       tags:
         - Ocr
@@ -3032,6 +3036,13 @@ components:
           description: Optional message describing the outcome (e.g., not found).
       required:
         - success
+    OcrMode:
+      title: OcrMode
+      type: string
+      enum:
+        - standard
+        - enhanced
+        - handwriting
     OcrPrintedPage:
       title: OcrPrintedPage
       type: object
@@ -3073,6 +3084,10 @@ components:
       title: OcrDocumentCreateRequest
       type: object
       properties:
+        mode:
+          $ref: '#/components/schemas/OcrMode'
+          nullable: true
+          description: OCR type. Defaults to standard ($0.025/page). Enhanced costs $0.125/page; Handwriting costs $0.25/page and does not include image-to-text highlighting. Only successfully extracted pages are charged.
         title:
           type: string
           nullable: true
@@ -3090,7 +3105,7 @@ components:
           description: Original file name including extension.
         content_type:
           type: string
-          description: MIME type such as application/pdf, image/png, or image/jpeg.
+          description: Supported MIME type (application/pdf, image/bmp, image/gif, image/jpeg, image/png, image/tiff, or image/webp). Images count as one page; encrypted PDFs are unsupported.
       required:
         - file
         - file_name
@@ -3154,6 +3169,10 @@ components:
         status:
           type: string
           description: OCR status such as PENDING, PROCESSING, COMPLETED, or FAILED.
+        error:
+          type: string
+          nullable: true
+          description: User-facing failure reason, when available. A failed document may still contain successfully extracted pages.
         pages:
           type: array
           items:
@@ -3193,7 +3212,7 @@ components:
         model:
           type: string
           nullable: true
-          description: Internal site OCR mode. Use standard (1 credit/page), legacy_enhanced (Enhanced, 5 credits/page), or handwriting (Handwriting beta, 10 credits/page). Handwriting requires a site credit reservation and provides transcription without image-to-text highlighting. The public document-upload endpoint remains Standard OCR.
+          description: Internal site OCR mode. Use standard (1 credit/page), legacy_enhanced (Enhanced, 5 credits/page), or handwriting (Handwriting beta, 10 credits/page). Site requests require a matching site credit reservation. Public callers select a mode through the document-upload endpoint and use their API balance.
       required:
         - storage_path
     OcrJobResponse:
