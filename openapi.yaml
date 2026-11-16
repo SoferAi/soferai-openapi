@@ -30,7 +30,14 @@ paths:
         **Choose a processing mode:**
 
         - **Express mode**: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.50/hour.
-        - **Standard mode**: Transcriptions processed within 24 hours. Max 500 files. Lower cost. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $1.00/hour. If you need higher limits, contact support@sofer.ai.
+        - **Standard mode**: Transcriptions processed within 24 hours. Production allows up to 1,000 files per manifest and 5,000 accepted files per UTC day per account. First upload a manifest via [Upload Batch Manifest File](/api-reference/batch-transcribe/upload-batch-file), then pass the `batch_file_id` here. Pricing for v1 batch standard is $1.00/hour.
+
+        Standard batches have a daily file quota separate from individual v1
+        submissions. Account file quotas are shared across API keys; the
+        5-request-per-minute allowance is per key and includes rate-limited
+        transcription and batch operations. Limits may differ by API environment
+        or configuration. See [API limits and errors](/api-limits-and-errors) for
+        counting rules, reset times, and handling HTTP 429.
 
         All files in the batch share the same transcription settings (model, language, etc.) defined in `info`.
 
@@ -70,6 +77,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -118,7 +129,13 @@ paths:
         1. Upload your manifest here to get a `batch_file_id`
         2. Use that ID in [Create Batch Transcription](/api-reference/batch-transcribe/create-batch-transcription) with `processing_mode: "standard"`
 
-        The manifest is a list of audio sources (max 500), each with a URL and optional title or `client_item_id`. If you provide `client_item_id`, it must be unique within the manifest. You can provide it as a JSON array or JSONL format. If you need higher limits, contact support@sofer.ai.
+        The manifest is a list of audio sources (up to 1,000 in production), each with a URL and optional title or `client_item_id`. If you provide `client_item_id`, it must be unique within the manifest. You can provide it as a JSON array or JSONL format.
+
+        Uploading a manifest uses the shared 5-request-per-minute allowance for
+        rate-limited transcription and batch operations on the same API key.
+        Files count toward the separate 5,000-file production daily standard-batch
+        quota when a batch is accepted for processing. Limits may differ by API
+        environment or configuration; see [API limits and errors](/api-limits-and-errors).
       operationId: batchTranscribe_uploadBatchFile
       tags:
         - BatchTranscribe
@@ -149,6 +166,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       summary: Upload Batch Manifest File
       security:
         - BearerAuth: []
@@ -198,6 +219,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/transcriptions/batch-files/from-rss:
@@ -237,6 +262,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       summary: Create Batch Manifest From RSS
       security:
         - BearerAuth: []
@@ -285,6 +314,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/transcriptions/batch-files/{batch_file_id}/batches:
@@ -366,6 +399,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       summary: List Batches For Manifest
       security:
         - BearerAuth: []
@@ -436,6 +473,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/transcriptions/batch/{batch_id}/items/by-client-item-id:
@@ -499,6 +540,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       summary: Get Batch Transcription By Client Item ID
       security:
         - BearerAuth: []
@@ -767,6 +812,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -832,6 +881,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/documents/{document_id}:
@@ -862,6 +915,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
     patch:
@@ -893,6 +950,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -945,6 +1006,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -1001,6 +1066,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/folders/:
@@ -1305,6 +1374,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -1332,6 +1405,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/maishiv/knowledge-base/search:
@@ -1373,6 +1450,10 @@ paths:
                 type: string
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
         "502":
           description: ""
           content:
@@ -1423,6 +1504,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/ocr/:
@@ -1805,6 +1890,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -1844,6 +1933,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/timestamps/outline:
@@ -1872,6 +1965,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -1900,6 +1997,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -1910,7 +2011,18 @@ paths:
               $ref: '#/components/schemas/UpdateTimestampsRequest'
   /v1/transcriptions/:
     post:
-      description: Create a new transcription
+      description: |-
+        Create a new transcription.
+
+        Production individual v1 submissions are limited to 50 files per UTC hour
+        and 300 files per UTC day, shared across the account's API keys. Failed
+        jobs still count as accepted submissions. Rate-limited transcription and
+        batch operations also share a 5-request-per-minute allowance per API key.
+        For bulk collections, use standard batch processing with its separate
+        daily quota and lower v1 pricing. Limits may differ by API environment or
+        account configuration. Support can assign custom hourly and daily file
+        allowances; quota errors report the effective account limit. See
+        [API limits and errors](/api-limits-and-errors).
       operationId: transcribe_createTranscription
       tags:
         - Transcribe
@@ -1930,6 +2042,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
         "500":
           description: ""
       security:
@@ -1959,6 +2075,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/transcriptions/{transcription_id}/status:
@@ -2006,6 +2126,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/transcriptions/{transcription_id}:
@@ -2080,6 +2204,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/translation-styles/:
@@ -2109,6 +2237,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
     post:
@@ -2137,6 +2269,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
         "503":
           description: ""
       security:
@@ -2173,6 +2309,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
     patch:
@@ -2205,6 +2345,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
         "503":
           description: ""
       security:
@@ -2242,6 +2386,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
   /v1/utils/duration:
@@ -2265,6 +2413,10 @@ paths:
           description: ""
         "429":
           description: ""
+          content:
+            application/json:
+              schema:
+                type: string
       security:
         - BearerAuth: []
       requestBody:
@@ -4052,7 +4204,7 @@ components:
           nullable: true
           description: |-
             Choose how the batch is processed:
-            - `standard` (default): Lower cost, processed within 24 hours. Max 500 files. Use with `batch_file_id`. Pricing for v1 batch standard is $1.00/hour. If you need higher limits, contact support@sofer.ai.
+            - `standard` (default): Lower cost, processed within 24 hours. Production allows up to 1,000 files per manifest and 5,000 files per UTC day per account. Use with `batch_file_id`. Pricing for v1 batch standard is $1.00/hour. Limits may differ by environment or configuration; see [API limits and errors](/api-limits-and-errors).
             - `express`: Submit up to 10 files at once with `audio_sources`. Express batches may take longer than individual transcription requests, but make it easier to submit multiple files together. Pricing for v1 is $1.50/hour.
         batch_file_id:
           type: string
@@ -4279,7 +4431,7 @@ components:
       description: |-
         Upload a manifest of audio URLs for standard mode batch processing.
         Use either `json_items` (JSON array) or `jsonl` (newline-delimited), not both.
-        Maximum 500 audio sources per manifest. Each item can optionally include a `client_item_id`, which must be unique within the manifest. If you need higher limits, contact support@sofer.ai.
+        Production allows up to 1,000 audio sources per manifest. Each item can optionally include a `client_item_id`, which must be unique within the manifest. Standard batches also share a 5,000-file quota per UTC day per account. Limits may differ by environment or configuration; see [API limits and errors](/api-limits-and-errors).
       properties:
         content_type:
           $ref: '#/components/schemas/BatchFileContentType'
@@ -4289,12 +4441,12 @@ components:
           items:
             $ref: '#/components/schemas/BatchManifestAudioSource'
           nullable: true
-          description: '**For JSON format.** Array of audio sources to transcribe (max 500). If you need higher limits, contact support@sofer.ai.'
+          description: '**For JSON format.** Array of audio sources to transcribe (up to 1,000 in production). See [API limits and errors](/api-limits-and-errors) for daily quotas and configuration differences.'
         jsonl:
           type: string
           nullable: true
           description: |-
-            **For JSONL format.** One audio source per line as JSON, separated by newlines (max 500 lines). If you need higher limits, contact support@sofer.ai.
+            **For JSONL format.** One audio source per line as JSON, separated by newlines (up to 1,000 lines in production). See [API limits and errors](/api-limits-and-errors) for daily quotas and configuration differences.
 
             Example: `{"audio_url": "https://..."}\n{"audio_url": "https://..."}`
         metadata:
