@@ -2669,7 +2669,7 @@
     },
     "/v1/partners/resources/{source_id}": {
       "get": {
-        "description": "Server-to-server display of the current explicitly published canonical text.\nRequires a dedicated read-only integration bearer credential, NOT a listener\nOAuth token. Credential is scoped to one integration; never place it in a browser.\nThe response contains plain text. Escape it when rendering HTML.",
+        "description": "Server-to-server display of the current explicitly published canonical text.\nRequires a dedicated read-only integration bearer credential, NOT a listener\nOAuth token. Credential is scoped to one integration; never place it in a browser.\nThe response contains plain text and the published revision's word timestamps\nwhen available. Escape text and words when rendering HTML.",
         "operationId": "partners_getPartnerResource",
         "tags": [
           "Partners"
@@ -5569,6 +5569,14 @@
           "text": {
             "type": "string"
           },
+          "timestamps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerWordTimestamp"
+            },
+            "nullable": true,
+            "description": "Word timings for the published text, or null when stored timings cannot be matched to it."
+          },
           "primary_language": {
             "type": "string",
             "nullable": true
@@ -5587,6 +5595,30 @@
           "title",
           "text",
           "provenance"
+        ]
+      },
+      "PartnerWordTimestamp": {
+        "title": "PartnerWordTimestamp",
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string"
+          },
+          "start": {
+            "type": "number",
+            "format": "double",
+            "description": "Start time in seconds from the beginning of the audio."
+          },
+          "end": {
+            "type": "number",
+            "format": "double",
+            "description": "End time in seconds from the beginning of the audio."
+          }
+        },
+        "required": [
+          "word",
+          "start",
+          "end"
         ]
       },
       "PartnerCopyRequest": {
@@ -6685,10 +6717,15 @@
           "timestamps": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Timestamp"
+              "$ref": "#/components/schemas/TranscriptionTimestamp"
             },
             "nullable": true,
-            "description": "Timestamps object for the transcription. See the `timestamps` object for more details."
+            "description": "Word timestamps. Private Yiddish beta timing is optional for eligible new individual and Express uploads, and may arrive after COMPLETED. Unsupported words stay in text and are omitted from this sparse list. Standard batch remains text-only for Yiddish."
+          },
+          "word_timing_status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Private Yiddish beta enrichment status, when applicable: PENDING, PARTIAL or UNAVAILABLE. Timing failure does not change transcription completion or billing. PARTIAL does not imply measured accuracy or complete coverage; inspect each timestamp's timing_kind."
           },
           "info": {
             "$ref": "#/components/schemas/TranscriptionInfo",
@@ -6895,6 +6932,35 @@
           "credits_required",
           "estimated_api_cost_cents",
           "segments"
+        ]
+      },
+      "TranscriptionTimestamp": {
+        "title": "TranscriptionTimestamp",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          {
+            "$ref": "#/components/schemas/BetaTimestamp"
+          }
+        ]
+      },
+      "BetaTimestamp": {
+        "title": "BetaTimestamp",
+        "type": "object",
+        "properties": {
+          "timing_kind": {
+            "type": "string",
+            "description": "Timing provenance for the private Yiddish beta. screened_candidate_anchor is a model timing candidate, not human-verified accuracy. interpolated_between_anchors is an equal-duration estimate inside a short supported gap, not a measured boundary."
+          }
+        },
+        "required": [
+          "timing_kind"
+        ],
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          }
         ]
       },
       "Timestamp": {
