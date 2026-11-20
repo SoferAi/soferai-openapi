@@ -1713,6 +1713,37 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OcrPrintedPageEditRequest'
+  /v1/partners/catalog/recordings/{source_id}:
+    put:
+      description: |-
+        Register or withdraw a recording using the dedicated ShiurBank server credential.
+        Send a strictly increasing version when the catalog state changes. An identical
+        retry of the current version is safe. Registration does not start transcription.
+      operationId: partners_putPartnerCatalogRecording
+      tags:
+        - Partners
+      parameters:
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerCatalogRecording'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnerCatalogRecordingRequest'
   /v1/partners/recordings/{source_id}/intents:
     post:
       description: |-
@@ -3850,6 +3881,49 @@ components:
         - job_id
         - status
         - pages
+    PartnerCatalogRecordingState:
+      title: PartnerCatalogRecordingState
+      type: string
+      enum:
+        - eligible
+        - withdrawn
+    PartnerCatalogRecordingRequest:
+      title: PartnerCatalogRecordingRequest
+      type: object
+      properties:
+        version:
+          type: integer
+          description: Positive recording version. Increase it for metadata or eligibility changes.
+        title:
+          type: string
+        language:
+          $ref: '#/components/schemas/PartnerTranscriptionLanguage'
+        page_url:
+          type: string
+        state:
+          $ref: '#/components/schemas/PartnerCatalogRecordingState'
+          description: Eligible attests that the recording meets the agreed ShiurBank permissions. Withdrawn disables it.
+      required:
+        - version
+        - title
+        - language
+        - page_url
+        - state
+    PartnerCatalogRecording:
+      title: PartnerCatalogRecording
+      type: object
+      properties:
+        source_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        state:
+          $ref: '#/components/schemas/PartnerCatalogRecordingState'
+      required:
+        - source_id
+        - version
+        - state
     PartnerRecordingIntentRequest:
       title: PartnerRecordingIntentRequest
       type: object
