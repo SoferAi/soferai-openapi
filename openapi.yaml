@@ -1023,6 +1023,7 @@ paths:
       description: |-
         Get the translation for a target language and style, including current status,
         remaining billable words, estimated API cost, and translated content.
+        A user API key can read translations only for documents that its user owns.
 
         The service rebuilds the document's current paragraphs or pages and compares
         their hashes with the hashes stored during translation. Changed source content
@@ -5012,7 +5013,7 @@ components:
           items:
             $ref: '#/components/schemas/TranscriptionTimestamp'
           nullable: true
-          description: Word timestamps. Private Yiddish beta timing is optional for eligible new individual and Express uploads, and may arrive after COMPLETED. Unsupported words stay in text and are omitted from this sparse list. Standard batch remains text-only for Yiddish.
+          description: Word timestamps. Private Yiddish beta timing is optional for eligible new individual and Express uploads, and may arrive after COMPLETED. Unsupported words stay in text and are omitted from this sparse list. Standard batch remains text-only for Yiddish. Timing is read from the canonical stored timestamps; accepted older HTML-only beta results remain readable. Null/untimed storage entries are never returned as zero-second times.
         word_timing_status:
           type: string
           nullable: true

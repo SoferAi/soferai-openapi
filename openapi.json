@@ -1474,7 +1474,7 @@
     },
     "/v1/documents/{document_id}/translations/{target_language}": {
       "get": {
-        "description": "Get the translation for a target language and style, including current status,\nremaining billable words, estimated API cost, and translated content.\n\nThe service rebuilds the document's current paragraphs or pages and compares\ntheir hashes with the hashes stored during translation. Changed source content\nis returned as stale and becomes billable again when translation is requested.",
+        "description": "Get the translation for a target language and style, including current status,\nremaining billable words, estimated API cost, and translated content.\nA user API key can read translations only for documents that its user owns.\n\nThe service rebuilds the document's current paragraphs or pages and compares\ntheir hashes with the hashes stored during translation. Changed source content\nis returned as stale and becomes billable again when translation is requested.",
         "operationId": "documents_getDocumentTranslation",
         "tags": [
           "Documents"
@@ -6826,7 +6826,7 @@
               "$ref": "#/components/schemas/TranscriptionTimestamp"
             },
             "nullable": true,
-            "description": "Word timestamps. Private Yiddish beta timing is optional for eligible new individual and Express uploads, and may arrive after COMPLETED. Unsupported words stay in text and are omitted from this sparse list. Standard batch remains text-only for Yiddish."
+            "description": "Word timestamps. Private Yiddish beta timing is optional for eligible new individual and Express uploads, and may arrive after COMPLETED. Unsupported words stay in text and are omitted from this sparse list. Standard batch remains text-only for Yiddish. Timing is read from the canonical stored timestamps; accepted older HTML-only beta results remain readable. Null/untimed storage entries are never returned as zero-second times."
           },
           "word_timing_status": {
             "type": "string",
