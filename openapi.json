@@ -2074,7 +2074,7 @@
     },
     "/v1/maishiv/knowledge-base/search": {
       "post": {
-        "description": "Retrieve up to n passages from the authenticated user's Maishiv knowledge base,\nwithout generating an answer. Only owned documents are returned. Times are\nnullable seconds and are provided only for a unique, reliable audio alignment.\nEach completed search costs $0.01 from the user's prepaid API balance,\nregardless of n or the number of matches. Zero-match searches are billable.\nInvalid requests, missing knowledge bases, and failed searches are not charged.\nWebsite subscriptions and daily question allowances do not apply.",
+        "description": "Retrieve up to n passages from the authenticated user's Maishiv knowledge base,\nwithout generating an answer. Only owned documents are returned. Times are\nnullable seconds and are provided only for a unique, reliable audio alignment.\nSet filter_sources to true to apply an AI relevance check to the retrieved\npassages. Fewer than n passages may qualify, including zero.\nEach completed search costs $0.01 from the user's prepaid API balance,\nregardless of n or the number of matches. Zero-match searches are billable.\nInvalid requests, missing knowledge bases, and failed searches are not charged.\nWebsite subscriptions and daily question allowances do not apply.",
         "operationId": "maishiv_searchKnowledgeBaseChunks",
         "tags": [
           "Maishiv"
@@ -4538,6 +4538,11 @@
             "type": "integer",
             "nullable": true,
             "description": "Maximum passages to return; an integer from 1 to 50. Defaults to 10 when omitted or null."
+          },
+          "filter_sources": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Keep only passages that directly help answer the query. Defaults to false when omitted or null."
           }
         },
         "required": [
